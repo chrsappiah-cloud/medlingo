@@ -35,8 +35,8 @@ protocol MessagingServiceProtocol {
 final class ChapterService: ChapterServiceProtocol {
     private let client: NetworkClientProtocol
 
-    init(client: NetworkClientProtocol = SupabaseManager.shared.networkClient) {
-        self.client = client
+    init(client: NetworkClientProtocol? = nil) {
+        self.client = client ?? SupabaseManager.shared.networkClient
     }
 
     func fetchChapters() async throws -> [Chapter] {

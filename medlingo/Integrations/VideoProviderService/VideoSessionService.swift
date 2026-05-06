@@ -16,8 +16,8 @@ struct VideoRoomInfo: Codable {
 final class VideoSessionService: VideoSessionServiceProtocol {
     private let client: NetworkClientProtocol
 
-    init(client: NetworkClientProtocol = SupabaseManager.shared.functionsClient) {
-        self.client = client
+    init(client: NetworkClientProtocol? = nil) {
+        self.client = client ?? SupabaseManager.shared.functionsClient
     }
 
     func createRoom(sessionID: UUID) async throws -> VideoRoomInfo {
