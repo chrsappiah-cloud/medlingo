@@ -5,12 +5,9 @@ final class SessionService: SessionServiceProtocol {
     private let client: NetworkClientProtocol
     private let functionsClient: NetworkClientProtocol
 
-    init(
-        client: NetworkClientProtocol = SupabaseManager.shared.networkClient,
-        functionsClient: NetworkClientProtocol = SupabaseManager.shared.functionsClient
-    ) {
-        self.client = client
-        self.functionsClient = functionsClient
+    init(client: NetworkClientProtocol? = nil, functionsClient: NetworkClientProtocol? = nil) {
+        self.client = client ?? SupabaseManager.shared.networkClient
+        self.functionsClient = functionsClient ?? SupabaseManager.shared.functionsClient
     }
 
     func fetchAvailableSessions() async throws -> [TutorSession] {

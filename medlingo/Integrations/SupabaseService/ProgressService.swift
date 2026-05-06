@@ -4,8 +4,8 @@ import Foundation
 final class ProgressService: ProgressServiceProtocol {
     private let client: NetworkClientProtocol
 
-    init(client: NetworkClientProtocol = SupabaseManager.shared.networkClient) {
-        self.client = client
+    init(client: NetworkClientProtocol? = nil) {
+        self.client = client ?? SupabaseManager.shared.networkClient
     }
 
     func fetchProgress(for userID: UUID) async throws -> [CachedProgress] {
