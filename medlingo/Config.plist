@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SUPABASE_URL</key>
+	<string>https://your-project.supabase.co</string>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>your-anon-key</string>
+	<key>DAILY_API_KEY</key>
+	<string>your-daily-api-key</string>
+	<key>DAILY_ROOM_BASE_URL</key>
+	<string>https://medlingo.daily.co</string>
+	<key>CLOUDKIT_CONTAINER_ID</key>
+	<string>iCloud.com.medlingo.app</string>
+	<key>AWS_BACKUP_BUCKET</key>
+	<string>medlingo-backups</string>
+</dict>
+</plist>

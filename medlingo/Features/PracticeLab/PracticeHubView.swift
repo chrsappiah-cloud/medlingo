@@ -43,13 +43,26 @@ struct PracticeHubView: View {
             SectionHeader(title: "Practice Modes")
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppSpacing.sm) {
-                PracticeModeCard(icon: "rectangle.on.rectangle.angled", title: "Flashcards", subtitle: "Quick recall", color: AppColor.diamond)
-                PracticeModeCard(icon: "puzzlepiece.extension.fill", title: "Word Builder", subtitle: "Build terms", color: AppColor.emerald)
-                PracticeModeCard(icon: "figure.stand", title: "Labeling", subtitle: "Anatomy ID", color: AppColor.gold)
-                PracticeModeCard(icon: "questionmark.circle.fill", title: "Quiz", subtitle: "Test knowledge", color: Color(hex: "FF6B9D"))
-                PracticeModeCard(icon: "doc.text.magnifyingglass", title: "Case Studies", subtitle: "Apply learning", color: Color(hex: "FF4500"))
-                PracticeModeCard(icon: "textformat.abc", title: "Abbreviations", subtitle: "Medical abbrev.", color: Color(hex: "7B68EE"))
+                NavigationLink(destination: FlashcardsView()) {
+                    PracticeModeCard(icon: "rectangle.on.rectangle.angled", title: "Flashcards", subtitle: "Quick recall", color: AppColor.diamond)
+                }
+                NavigationLink(destination: WordBuilderView()) {
+                    PracticeModeCard(icon: "puzzlepiece.extension.fill", title: "Word Builder", subtitle: "Build terms", color: AppColor.emerald)
+                }
+                NavigationLink(destination: LabelingView()) {
+                    PracticeModeCard(icon: "figure.stand", title: "Labeling", subtitle: "Anatomy ID", color: AppColor.gold)
+                }
+                NavigationLink(destination: QuizView(exercise: nil)) {
+                    PracticeModeCard(icon: "questionmark.circle.fill", title: "Quiz", subtitle: "Test knowledge", color: Color(hex: "FF6B9D"))
+                }
+                NavigationLink(destination: CaseStudyView()) {
+                    PracticeModeCard(icon: "doc.text.magnifyingglass", title: "Case Studies", subtitle: "Apply learning", color: Color(hex: "FF4500"))
+                }
+                NavigationLink(destination: FlashcardsView()) {
+                    PracticeModeCard(icon: "textformat.abc", title: "Abbreviations", subtitle: "Medical abbrev.", color: Color(hex: "7B68EE"))
+                }
             }
+            .buttonStyle(.plain)
         }
     }
 

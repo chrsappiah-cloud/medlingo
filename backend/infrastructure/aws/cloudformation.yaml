@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Medlingo AWS Backup Infrastructure
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [production, staging]
+  SupabaseURL:
+    Type: String
+    Description: Supabase project URL
+  SupabaseServiceKey:
+    Type: String
+    NoEcho: true
+    Description: Supabase service role key
+
+Resources:
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "medlingo-backups-${Environment}"
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveOldBackups
+            Status: Enabled
+            Transitions:
+              - StorageClass: GLACIER
+                TransitionInDays: 30
+            ExpirationInDays: 365
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  BackupLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "medlingo-backup-lambda-role-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3BackupAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt BackupBucket.Arn
+                  - !Sub "${BackupBucket.Arn}/*"
+
+  BackupLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medlingo-backup-${Environment}"
+      Runtime: nodejs20.x
+      Handler: backup-lambda.handler
+      Role: !GetAtt BackupLambdaRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      Environment:
+        Variables:
+          BACKUP_BUCKET: !Ref BackupBucket
+          SUPABASE_URL: !Ref SupabaseURL
+          SUPABASE_SERVICE_KEY: !Ref SupabaseServiceKey
+          AWS_REGION: !Ref AWS::Region
+
+  BackupScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "medlingo-daily-backup-${Environment}"
+      Description: Daily backup of Medlingo data
+      ScheduleExpression: "cron(0 2 * * ? *)"
+      State: ENABLED
+      Targets:
+        - Id: BackupLambdaTarget
+          Arn: !GetAtt BackupLambdaFunction.Arn
+          Input: !Sub |
+            {
+              "tables": ["users", "learner_profiles", "chapters", "lessons", "exercises", "attempts", "sessions", "bookings", "purchases", "entitlements", "messages"],
+              "supabaseUrl": "${SupabaseURL}",
+              "supabaseServiceKey": "${SupabaseServiceKey}"
+            }
+
+  BackupSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BackupLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt BackupScheduleRule.Arn
+
+Outputs:
+  BackupBucketName:
+    Value: !Ref BackupBucket
+    Description: S3 bucket for backups
+  BackupLambdaArn:
+    Value: !GetAtt BackupLambdaFunction.Arn
+    Description: ARN of the backup Lambda function

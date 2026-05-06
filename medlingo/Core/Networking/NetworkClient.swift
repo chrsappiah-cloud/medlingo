@@ -35,7 +35,8 @@ struct Endpoint {
 final class NetworkClient: NetworkClientProtocol {
     private let session: URLSession
     private let baseURL: URL
-    private let tokenProvider: () async -> String?
+    private var defaultHeaders: [String: String]
+    private let tokenProvider: (() async -> String?)?
 
     init(
         baseURL: URL,
@@ -44,7 +45,23 @@ final class NetworkClient: NetworkClientProtocol {
     ) {
         self.baseURL = baseURL
         self.tokenProvider = tokenProvider
+        self.defaultHeaders = ["Content-Type": "application/json"]
         self.session = session
+    }
+
+    init(
+        baseURL: URL,
+        defaultHeaders: [String: String] = [:],
+        session: URLSession = .shared
+    ) {
+        self.baseURL = baseURL
+        self.defaultHeaders = defaultHeaders
+        self.tokenProvider = nil
+        self.session = session
+    }
+
+    func setHeader(_ key: String, value: String) {
+        defaultHeaders[key] = value
     }
 
     func request<T: Decodable>(_ endpoint: Endpoint) async throws -> T {
@@ -66,9 +83,12 @@ final class NetworkClient: NetworkClientProtocol {
         var request = URLRequest(url: components.url!)
         request.httpMethod = endpoint.method.rawValue
         request.httpBody = endpoint.body
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        if let token = await tokenProvider() {
+        for (key, value) in defaultHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        if let tokenProvider, let token = await tokenProvider() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 

@@ -25,6 +25,34 @@ struct ChapterDetailView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .preferredColorScheme(.dark)
+        .navigationDestination(for: NavigationRouter.Destination.self) { destination in
+            routeDestination(destination)
+        }
+    }
+
+    @ViewBuilder
+    private func routeDestination(_ destination: NavigationRouter.Destination) -> some View {
+        switch destination {
+        case .lessonPlayer(let lessonID, let chapterID):
+            let lessons = DataMiddleware.sampleLessons(for: chapterID)
+            if let lesson = lessons.first(where: { $0.id == lessonID }) ?? lessons.first {
+                LessonPlayerView(lesson: lesson, stageColor: stageColor)
+            }
+        case .flashcards:
+            FlashcardsView()
+        case .wordBuilder:
+            WordBuilderView()
+        case .labeling:
+            LabelingView()
+        case .quiz:
+            QuizView(exercise: nil)
+        case .caseStudy:
+            CaseStudyView()
+        case .bookSession:
+            TutorDiscoveryView()
+        default:
+            Text("Coming Soon")
+        }
     }
 
     private var heroSection: some View {
@@ -71,13 +99,14 @@ struct ChapterDetailView: View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             SectionHeader(title: "Lessons")
 
+            let sampleLessons = DataMiddleware.sampleLessons(for: chapter.id)
             VStack(spacing: AppSpacing.xs) {
-                LessonRow(number: 1, title: "Introduction & Overview", isCompleted: true, color: stageColor)
-                LessonRow(number: 2, title: "Key Word Parts", isCompleted: true, color: stageColor)
-                LessonRow(number: 3, title: "Structure & Function", isCompleted: false, color: stageColor)
-                LessonRow(number: 4, title: "Disorders & Conditions", isCompleted: false, color: stageColor)
-                LessonRow(number: 5, title: "Procedures & Treatments", isCompleted: false, color: stageColor)
-                LessonRow(number: 6, title: "Abbreviations", isCompleted: false, color: stageColor)
+                ForEach(Array(sampleLessons.enumerated()), id: \.element.id) { index, lesson in
+                    NavigationLink(value: NavigationRouter.Destination.lessonPlayer(lessonID: lesson.id, chapterID: chapter.id)) {
+                        LessonRow(number: index + 1, title: lesson.title, isCompleted: index < 2, color: stageColor)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
     }
@@ -87,35 +116,47 @@ struct ChapterDetailView: View {
             SectionHeader(title: "Practice")
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppSpacing.sm) {
-                PracticeTypeCard(icon: "rectangle.on.rectangle", title: "Flashcards", count: 24, color: AppColor.diamond)
-                PracticeTypeCard(icon: "puzzlepiece.fill", title: "Word Builder", count: 12, color: AppColor.emerald)
-                PracticeTypeCard(icon: "tag.fill", title: "Labeling", count: 8, color: AppColor.gold)
-                PracticeTypeCard(icon: "doc.text.fill", title: "Case Study", count: 3, color: Color(hex: "FF6B9D"))
+                NavigationLink(value: NavigationRouter.Destination.flashcards(chapterID: chapter.id)) {
+                    PracticeTypeCard(icon: "rectangle.on.rectangle", title: "Flashcards", count: 24, color: AppColor.diamond)
+                }
+                NavigationLink(value: NavigationRouter.Destination.wordBuilder(chapterID: chapter.id)) {
+                    PracticeTypeCard(icon: "puzzlepiece.fill", title: "Word Builder", count: 12, color: AppColor.emerald)
+                }
+                NavigationLink(value: NavigationRouter.Destination.labeling(chapterID: chapter.id)) {
+                    PracticeTypeCard(icon: "tag.fill", title: "Labeling", count: 8, color: AppColor.gold)
+                }
+                NavigationLink(value: NavigationRouter.Destination.caseStudy(chapterID: chapter.id)) {
+                    PracticeTypeCard(icon: "doc.text.fill", title: "Case Study", count: 3, color: Color(hex: "FF6B9D"))
+                }
             }
         }
+        .buttonStyle(.plain)
     }
 
     private var tutorSupportSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             SectionHeader(title: "Tutor Support")
 
-            AppCard {
-                HStack {
-                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                        Text("Need help with this stage?")
-                            .font(AppTypography.headline)
-                            .foregroundColor(AppColor.textPrimary)
-                        Text("Book a session with an expert tutor")
-                            .font(AppTypography.subheadline)
-                            .foregroundColor(AppColor.textSecondary)
+            NavigationLink(value: NavigationRouter.Destination.bookSession(sessionID: UUID())) {
+                AppCard {
+                    HStack {
+                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                            Text("Need help with this stage?")
+                                .font(AppTypography.headline)
+                                .foregroundColor(AppColor.textPrimary)
+                            Text("Book a session with an expert tutor")
+                                .font(AppTypography.subheadline)
+                                .foregroundColor(AppColor.textSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "person.fill.questionmark")
+                            .font(.title2)
+                            .foregroundColor(AppColor.gold)
+                            .shadow(color: AppColor.gold.opacity(0.4), radius: 4)
                     }
-                    Spacer()
-                    Image(systemName: "person.fill.questionmark")
-                        .font(.title2)
-                        .foregroundColor(AppColor.gold)
-                        .shadow(color: AppColor.gold.opacity(0.4), radius: 4)
                 }
             }
+            .buttonStyle(.plain)
         }
     }
 

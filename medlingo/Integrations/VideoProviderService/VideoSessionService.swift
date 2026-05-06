@@ -12,6 +12,7 @@ struct VideoRoomInfo: Codable {
     let expiresAt: Date
 }
 
+@MainActor
 final class VideoSessionService: VideoSessionServiceProtocol {
     private let client: NetworkClientProtocol
 

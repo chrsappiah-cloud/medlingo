@@ -13,11 +13,14 @@ final class AppState {
     let analyticsService = AnalyticsService.shared
     let chapterService = ChapterService()
     let cloudKitSync = CloudKitSyncService()
+    let syncCoordinator = SyncCoordinator.shared
+    let pronunciationService = PronunciationService.shared
 
     // App-wide state
     var isOnboardingComplete = true
     var currentUserRole: AppUser.UserRole = .learner
     var isPremium: Bool { !storeKitService.purchasedProductIDs.isEmpty }
+    var currentUserID: UUID?
 
     private init() {}
 

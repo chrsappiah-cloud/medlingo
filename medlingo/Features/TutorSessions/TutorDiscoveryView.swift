@@ -2,12 +2,22 @@ import SwiftUI
 
 struct TutorDiscoveryView: View {
     @State private var searchText = ""
+    @State private var showBooking = false
+    @State private var selectedSession: TutorSession?
+
+    private let sampleSession = TutorSession(
+        id: UUID(), tutorID: UUID(), title: "Cardiovascular Terminology Review",
+        description: "Deep dive into cardio terms", startsAt: Date().addingTimeInterval(7200),
+        durationMinutes: 45, priceCents: 4500, seatsAvailable: 10, seatsBooked: 3,
+        chapterIDs: [], status: .scheduled
+    )
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
                     upcomingSessionBanner
+                    availableSessionsSection
                     tutorListSection
                 }
                 .padding(.horizontal, AppSpacing.md)
@@ -18,8 +28,45 @@ struct TutorDiscoveryView: View {
             .navigationTitle("Sessions")
             .searchable(text: $searchText, prompt: "Search tutors or topics")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .sheet(item: $selectedSession) { session in
+                BookingFlowView(session: session)
+            }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var availableSessionsSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            SectionHeader(title: "Upcoming Sessions")
+
+            let sessions = DataMiddleware.sampleSessions()
+            ForEach(sessions) { session in
+                Button {
+                    selectedSession = session
+                } label: {
+                    AppCard {
+                        HStack {
+                            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                                Text(session.title)
+                                    .font(AppTypography.headline)
+                                    .foregroundColor(AppColor.textPrimary)
+                                Text(session.startsAt.formatted(date: .abbreviated, time: .shortened))
+                                    .font(AppTypography.caption1)
+                                    .foregroundColor(AppColor.textSecondary)
+                                Text("\(session.seatsAvailable - session.seatsBooked) seats left")
+                                    .font(AppTypography.caption2)
+                                    .foregroundColor(AppColor.emerald)
+                            }
+                            Spacer()
+                            Text("$\(String(format: "%.0f", Double(session.priceCents) / 100.0))")
+                                .font(AppTypography.headline)
+                                .foregroundColor(AppColor.gold)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     private var upcomingSessionBanner: some View {

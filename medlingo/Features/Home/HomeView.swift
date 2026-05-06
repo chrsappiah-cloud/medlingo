@@ -21,17 +21,65 @@ struct HomeView: View {
                 .padding(.bottom, AppSpacing.xxl)
             }
             .background(AppColor.background)
-            .navigationTitle("Medlingo")
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: NavigationRouter.Destination.self) { destination in
+                destinationView(for: destination)
+            }
         }
         .preferredColorScheme(.dark)
+    }
+
+    @ViewBuilder
+    private func destinationView(for destination: NavigationRouter.Destination) -> some View {
+        switch destination {
+        case .stageDetail(let chapter, let colorIndex):
+            ChapterDetailView(chapter: chapter, colorIndex: colorIndex)
+        case .lessonPlayer(let lessonID, let chapterID):
+            let lessons = DataMiddleware.sampleLessons(for: chapterID)
+            if let lesson = lessons.first(where: { $0.id == lessonID }) ?? lessons.first {
+                LessonPlayerView(lesson: lesson, stageColor: AppColor.gold)
+            }
+        case .flashcards:
+            FlashcardsView()
+        case .wordBuilder:
+            WordBuilderView()
+        case .labeling:
+            LabelingView()
+        case .quiz:
+            QuizView(exercise: nil)
+        case .caseStudy:
+            CaseStudyView()
+        case .bookSession:
+            TutorDiscoveryView()
+        case .sessionRoom:
+            Text("Joining session...")
+        case .messages:
+            MessagingView(recipientID: UUID(), recipientName: "Tutor")
+        case .subscription:
+            Text("Subscription")
+        case .settings:
+            Text("Settings")
+        case .adminConsole:
+            AdminConsoleView()
+        case .tutorProfile:
+            TutorDiscoveryView()
+        case .exercise:
+            QuizView(exercise: nil)
+        }
     }
 
     private var welcomeSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text("Medlingo")
                 .font(AppTypography.largeTitle)
-                .foregroundStyle(AppColor.goldGradient)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [AppColor.gold, AppColor.diamond, AppColor.gold],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .shadow(color: AppColor.gold.opacity(0.3), radius: 4)
 
             HStack(spacing: AppSpacing.lg) {
                 HStack(spacing: AppSpacing.xxs) {
@@ -72,9 +120,18 @@ struct HomeView: View {
                     Spacer()
                     ProgressRing(progress: viewModel.stageProgress, lineWidth: 6, size: 52, color: AppColor.emerald)
                 }
-                PrimaryButton(title: "Resume") {
-                    AnalyticsService.shared.track(.screenViewed(name: "lesson_resume"))
+                NavigationLink(value: NavigationRouter.Destination.stageDetail(chapter: viewModel.currentStage, colorIndex: 2)) {
+                    Text("Resume")
+                        .font(AppTypography.headline)
+                        .foregroundColor(AppColor.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(AppColor.goldGradient)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
                 }
+                .simultaneousGesture(TapGesture().onEnded {
+                    AnalyticsService.shared.track(.screenViewed(name: "lesson_resume"))
+                })
             }
         }
     }
@@ -86,7 +143,10 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: AppSpacing.sm) {
                     ForEach(Array(viewModel.chapters.enumerated()), id: \.element.id) { index, chapter in
-                        StageBadge(stageNumber: chapter.number, title: chapter.title, colorIndex: index)
+                        NavigationLink(value: NavigationRouter.Destination.stageDetail(chapter: chapter, colorIndex: index)) {
+                            StageBadge(stageNumber: chapter.number, title: chapter.title, colorIndex: index)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -154,6 +214,10 @@ final class HomeViewModel {
     var hasUpcomingSession: Bool = true
     var termsDueForReview: Int = 12
     var overallMastery: Double = 0.72
+
+    var currentStage: Chapter {
+        chapters.first(where: { $0.number == 3 }) ?? chapters.first ?? Chapter(id: UUID(), number: 3, title: "Skeletal System", summary: "Bones, joints, and conditions", estimatedMinutes: 75, isPremium: true, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .premium)
+    }
 
     init() {
         loadSampleStages()

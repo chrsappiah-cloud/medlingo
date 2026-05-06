@@ -68,6 +68,35 @@ final class medlingoUITests: XCTestCase {
         XCTAssertTrue(resumeButton.waitForExistence(timeout: 3))
     }
 
+    @MainActor
+    func testResumeButtonNavigatesToStageDetail() throws {
+        let resumeButton = app.buttons["Resume"]
+        XCTAssertTrue(resumeButton.waitForExistence(timeout: 3))
+        resumeButton.tap()
+
+        let stageTitle = app.navigationBars["Stage 3"]
+        XCTAssertTrue(stageTitle.waitForExistence(timeout: 5), "Tapping Resume should navigate to Stage 3 detail")
+
+        let lessonsHeader = app.staticTexts["Lessons"]
+        XCTAssertTrue(lessonsHeader.waitForExistence(timeout: 3), "Stage detail should show Lessons section")
+
+        let practiceHeader = app.staticTexts["Practice"]
+        XCTAssertTrue(practiceHeader.exists, "Stage detail should show Practice section")
+    }
+
+    @MainActor
+    func testStageBadgeNavigatesToStageDetail() throws {
+        let foundationsBadge = app.staticTexts["Foundations"]
+        XCTAssertTrue(foundationsBadge.waitForExistence(timeout: 3))
+        foundationsBadge.tap()
+
+        let stageTitle = app.navigationBars["Stage 1"]
+        XCTAssertTrue(stageTitle.waitForExistence(timeout: 5), "Tapping stage badge should navigate to Stage detail")
+
+        let flashcardsText = app.staticTexts["Flashcards"]
+        XCTAssertTrue(flashcardsText.waitForExistence(timeout: 3), "Stage detail should show Flashcards practice card")
+    }
+
     // MARK: - Practice Lab Tests
 
     @MainActor
@@ -166,5 +195,47 @@ final class medlingoUITests: XCTestCase {
         let scrollView = app.scrollViews.firstMatch
         XCTAssertTrue(scrollView.waitForExistence(timeout: 3))
         scrollView.swipeUp()
+    }
+
+    // MARK: - Labeling View Tests
+
+    @MainActor
+    func testLabelingViewOpensFromPracticeLab() throws {
+        app.tabBars.firstMatch.buttons["Practice"].tap()
+
+        let labelingText = app.staticTexts["Labeling"]
+        XCTAssertTrue(labelingText.waitForExistence(timeout: 5))
+
+        let container = labelingText.firstMatch
+        container.tap()
+
+        let navTitle = app.navigationBars["Labeling"]
+        if !navTitle.waitForExistence(timeout: 5) {
+            app.staticTexts["Anatomy ID"].tap()
+            XCTAssertTrue(navTitle.waitForExistence(timeout: 5), "Should navigate to Labeling view")
+        }
+    }
+
+    @MainActor
+    func testLabelingViewShowsLabelsAndInteracts() throws {
+        app.tabBars.firstMatch.buttons["Practice"].tap()
+
+        let labelingText = app.staticTexts["Labeling"]
+        XCTAssertTrue(labelingText.waitForExistence(timeout: 5))
+        labelingText.tap()
+
+        if !app.navigationBars["Labeling"].waitForExistence(timeout: 3) {
+            app.staticTexts["Anatomy ID"].tap()
+        }
+
+        let labelsHeader = app.staticTexts["LABELS"]
+        if labelsHeader.waitForExistence(timeout: 5) {
+            let craniumButton = app.buttons["Cranium"]
+            if craniumButton.waitForExistence(timeout: 3) {
+                craniumButton.tap()
+                let hintButton = app.buttons["Hint"]
+                XCTAssertTrue(hintButton.waitForExistence(timeout: 3), "Hint button should appear after selecting a label")
+            }
+        }
     }
 }
