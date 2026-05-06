@@ -9,6 +9,11 @@ final class SupabaseManager {
     let networkClient: NetworkClient
     let functionsClient: NetworkClient
 
+    /// Returns false when placeholder/default credentials are still in use.
+    var isConfigured: Bool {
+        !Config.supabaseURL.contains("your-project") && !Config.supabaseAnonKey.contains("your-anon-key")
+    }
+
     private init() {
         self.projectURL = URL(string: Config.supabaseURL)!
         self.anonKey = Config.supabaseAnonKey
