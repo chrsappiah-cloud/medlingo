@@ -38,6 +38,12 @@ final class DataMiddleware {
         isLoading = true
         defer { isLoading = false }
 
+        guard SupabaseManager.shared.isConfigured else {
+            chapters = Self.sampleChapters()
+            sessions = Self.sampleSessions()
+            return
+        }
+
         do {
             chapters = try await chapterService.fetchChapters()
         } catch {
@@ -47,6 +53,10 @@ final class DataMiddleware {
     }
 
     func loadLessons(for chapterID: UUID) async {
+        guard SupabaseManager.shared.isConfigured else {
+            lessons[chapterID] = Self.sampleLessons(for: chapterID)
+            return
+        }
         do {
             let chapterLessons = try await chapterService.fetchLessons(for: chapterID)
             lessons[chapterID] = chapterLessons
@@ -88,6 +98,10 @@ final class DataMiddleware {
     }
 
     func loadSessions() async {
+        guard SupabaseManager.shared.isConfigured else {
+            sessions = Self.sampleSessions()
+            return
+        }
         do {
             sessions = try await sessionService.fetchAvailableSessions()
         } catch {
@@ -96,13 +110,22 @@ final class DataMiddleware {
     }
 
     func bookSession(sessionID: UUID) async -> Booking? {
+        let learnerID = AppState.shared.currentUserID ?? UUID()
+
+        guard SupabaseManager.shared.isConfigured else {
+            let booking = Booking(id: UUID(), sessionID: sessionID, learnerID: learnerID, status: .confirmed, bookedAt: Date())
+            bookings.append(booking)
+            analyticsService.track(.sessionBooked(sessionID: sessionID, tutorID: UUID()))
+            return booking
+        }
+
         do {
-            let booking = try await sessionService.bookSession(sessionID: sessionID, learnerID: AppState.shared.currentUserID ?? UUID())
+            let booking = try await sessionService.bookSession(sessionID: sessionID, learnerID: learnerID)
             bookings.append(booking)
             analyticsService.track(.sessionBooked(sessionID: sessionID, tutorID: UUID()))
             return booking
         } catch {
-            let booking = Booking(id: UUID(), sessionID: sessionID, learnerID: UUID(), status: .confirmed, bookedAt: Date())
+            let booking = Booking(id: UUID(), sessionID: sessionID, learnerID: learnerID, status: .confirmed, bookedAt: Date())
             bookings.append(booking)
             return booking
         }
@@ -116,6 +139,11 @@ final class DataMiddleware {
     }
 
     func createSessionRoom(sessionID: UUID) async -> (url: URL, token: String)? {
+        guard SupabaseManager.shared.isConfigured else {
+            let demoURL = URL(string: "\(Config.dailyRoomBaseURL)/medlingo-\(sessionID.uuidString.prefix(8))")!
+            return (demoURL, "demo-token-\(UUID().uuidString.prefix(8))")
+        }
+
         do {
             return try await sessionService.createRoomToken(sessionID: sessionID)
         } catch {
@@ -126,6 +154,7 @@ final class DataMiddleware {
 
     func loadMessages() async {
         guard let userID = AppState.shared.currentUserID else { return }
+        guard SupabaseManager.shared.isConfigured else { return }
         do {
             messages = try await messagingService.fetchMessages(for: userID)
         } catch {
@@ -134,7 +163,14 @@ final class DataMiddleware {
     }
 
     func sendMessage(to recipientID: UUID, content: String) async {
-        guard let senderID = AppState.shared.currentUserID else { return }
+        let senderID = AppState.shared.currentUserID ?? UUID()
+
+        guard SupabaseManager.shared.isConfigured else {
+            let fallback = ChatMessage(id: UUID(), senderID: senderID, recipientID: recipientID, content: content, sentAt: Date(), readAt: nil, attachmentURL: nil)
+            messages.append(fallback)
+            return
+        }
+
         do {
             let message = try await messagingService.sendMessage(from: senderID, to: recipientID, content: content)
             messages.append(message)

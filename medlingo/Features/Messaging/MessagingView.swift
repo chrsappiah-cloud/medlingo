@@ -7,6 +7,9 @@ struct MessagingView: View {
     @State private var messages: [ChatMessage] = MessagingView.sampleMessages
     @State private var inputText = ""
     @State private var isSending = false
+    @State private var showVideoCall = false
+    @State private var videoRoomURL: URL?
+    @State private var videoToken: String?
 
     private let currentUserID = UUID()
 
@@ -25,6 +28,36 @@ struct MessagingView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .preferredColorScheme(.dark)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    Task { await startVideoCall() }
+                } label: {
+                    Image(systemName: "video.fill")
+                        .foregroundColor(AppColor.diamond)
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showVideoCall) {
+            if let url = videoRoomURL, let token = videoToken {
+                let session = TutorSession(
+                    id: UUID(), tutorID: recipientID, title: "Call with \(recipientName)",
+                    description: nil, startsAt: Date(), durationMinutes: 30,
+                    priceCents: 0, seatsAvailable: 2, seatsBooked: 1,
+                    chapterIDs: [], status: .live
+                )
+                SessionRoomView(session: session, roomURL: url, token: token)
+            }
+        }
+    }
+
+    private func startVideoCall() async {
+        let sessionID = UUID()
+        if let result = await DataMiddleware.shared.createSessionRoom(sessionID: sessionID) {
+            videoRoomURL = result.url
+            videoToken = result.token
+            showVideoCall = true
+        }
     }
 
     // MARK: - Messages List

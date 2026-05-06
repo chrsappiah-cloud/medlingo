@@ -25,34 +25,6 @@ struct ChapterDetailView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .preferredColorScheme(.dark)
-        .navigationDestination(for: NavigationRouter.Destination.self) { destination in
-            routeDestination(destination)
-        }
-    }
-
-    @ViewBuilder
-    private func routeDestination(_ destination: NavigationRouter.Destination) -> some View {
-        switch destination {
-        case .lessonPlayer(let lessonID, let chapterID):
-            let lessons = DataMiddleware.sampleLessons(for: chapterID)
-            if let lesson = lessons.first(where: { $0.id == lessonID }) ?? lessons.first {
-                LessonPlayerView(lesson: lesson, stageColor: stageColor)
-            }
-        case .flashcards:
-            FlashcardsView()
-        case .wordBuilder:
-            WordBuilderView()
-        case .labeling:
-            LabelingView()
-        case .quiz:
-            QuizView(exercise: nil)
-        case .caseStudy:
-            CaseStudyView()
-        case .bookSession:
-            TutorDiscoveryView()
-        default:
-            Text("Coming Soon")
-        }
     }
 
     private var heroSection: some View {

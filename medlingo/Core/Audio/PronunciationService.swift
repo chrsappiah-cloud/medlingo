@@ -26,6 +26,11 @@ final class PronunciationService: PronunciationServiceProtocol {
             .lowercased()
             .trimmingCharacters(in: .whitespaces)
 
+        guard SupabaseManager.shared.isConfigured else {
+            audioEngine.speakTerm(term)
+            return
+        }
+
         if let cachedURL = urlCache[sanitized] {
             await audioEngine.playAudioFromURL(cachedURL, term: term)
         } else if let remoteURL = await fetchAudioURL(for: sanitized) {
@@ -37,6 +42,8 @@ final class PronunciationService: PronunciationServiceProtocol {
     }
 
     func fetchAudioURL(for term: String) async -> URL? {
+        guard SupabaseManager.shared.isConfigured else { return nil }
+
         let url = storageBaseURL.appendingPathComponent("\(term).mp3")
         var request = URLRequest(url: url)
         request.httpMethod = "HEAD"
@@ -51,6 +58,8 @@ final class PronunciationService: PronunciationServiceProtocol {
     }
 
     func preloadAudio(for terms: [String]) async {
+        guard SupabaseManager.shared.isConfigured else { return }
+
         await withTaskGroup(of: Void.self) { group in
             for term in terms {
                 group.addTask {

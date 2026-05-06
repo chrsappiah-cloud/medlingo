@@ -1,16 +1,15 @@
 import SwiftUI
 
 struct TutorDiscoveryView: View {
+    @Environment(DataMiddleware.self) private var middleware
     @State private var searchText = ""
     @State private var showBooking = false
     @State private var selectedSession: TutorSession?
-
-    private let sampleSession = TutorSession(
-        id: UUID(), tutorID: UUID(), title: "Cardiovascular Terminology Review",
-        description: "Deep dive into cardio terms", startsAt: Date().addingTimeInterval(7200),
-        durationMinutes: 45, priceCents: 4500, seatsAvailable: 10, seatsBooked: 3,
-        chapterIDs: [], status: .scheduled
-    )
+    @State private var activeRoomSession: TutorSession?
+    @State private var roomURL: URL?
+    @State private var roomToken: String?
+    @State private var isJoining = false
+    @State private var joinError: String?
 
     var body: some View {
         NavigationStack {
@@ -18,6 +17,7 @@ struct TutorDiscoveryView: View {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
                     upcomingSessionBanner
                     availableSessionsSection
+                    bookedSessionsSection
                     tutorListSection
                 }
                 .padding(.horizontal, AppSpacing.md)
@@ -31,46 +31,92 @@ struct TutorDiscoveryView: View {
             .sheet(item: $selectedSession) { session in
                 BookingFlowView(session: session)
             }
+            .fullScreenCover(item: $activeRoomSession) { session in
+                if let url = roomURL, let token = roomToken {
+                    SessionRoomView(session: session, roomURL: url, token: token)
+                }
+            }
+            .alert("Join Error", isPresented: .init(get: { joinError != nil }, set: { if !$0 { joinError = nil } })) {
+                Button("OK") { joinError = nil }
+            } message: {
+                Text(joinError ?? "")
+            }
         }
         .preferredColorScheme(.dark)
+        .task { await middleware.loadSessions() }
     }
 
     private var availableSessionsSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             SectionHeader(title: "Upcoming Sessions")
 
-            let sessions = DataMiddleware.sampleSessions()
-            ForEach(sessions) { session in
-                Button {
-                    selectedSession = session
-                } label: {
-                    AppCard {
-                        HStack {
-                            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                                Text(session.title)
-                                    .font(AppTypography.headline)
-                                    .foregroundColor(AppColor.textPrimary)
-                                Text(session.startsAt.formatted(date: .abbreviated, time: .shortened))
-                                    .font(AppTypography.caption1)
-                                    .foregroundColor(AppColor.textSecondary)
-                                Text("\(session.seatsAvailable - session.seatsBooked) seats left")
-                                    .font(AppTypography.caption2)
-                                    .foregroundColor(AppColor.emerald)
+            let sessions = filteredSessions
+            if sessions.isEmpty {
+                emptyState(icon: "calendar.badge.clock", text: "No upcoming sessions available")
+            } else {
+                ForEach(sessions) { session in
+                    Button {
+                        selectedSession = session
+                    } label: {
+                        SessionCard(session: session, actionLabel: "Book")
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var bookedSessionsSection: some View {
+        Group {
+            if !middleware.bookings.isEmpty {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    SectionHeader(title: "My Bookings")
+
+                    ForEach(middleware.bookings) { booking in
+                        let matchingSession = middleware.sessions.first(where: { $0.id == booking.sessionID })
+                        if let session = matchingSession {
+                            AppCard {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                                        Text(session.title)
+                                            .font(AppTypography.headline)
+                                            .foregroundColor(AppColor.textPrimary)
+                                        Text(session.startsAt.formatted(date: .abbreviated, time: .shortened))
+                                            .font(AppTypography.caption1)
+                                            .foregroundColor(AppColor.textSecondary)
+                                        HStack(spacing: AppSpacing.xxs) {
+                                            Circle()
+                                                .fill(AppColor.emerald)
+                                                .frame(width: 6, height: 6)
+                                            Text("Confirmed")
+                                                .font(AppTypography.caption2)
+                                                .foregroundColor(AppColor.emerald)
+                                        }
+                                    }
+                                    Spacer()
+                                    PrimaryButton(title: isJoining ? "..." : "Join") {
+                                        Task { await joinSession(session) }
+                                    }
+                                    .frame(width: 80)
+                                    .disabled(isJoining)
+                                }
                             }
-                            Spacer()
-                            Text("$\(String(format: "%.0f", Double(session.priceCents) / 100.0))")
-                                .font(AppTypography.headline)
-                                .foregroundColor(AppColor.gold)
                         }
                     }
                 }
-                .buttonStyle(.plain)
             }
         }
     }
 
     private var upcomingSessionBanner: some View {
-        AppCard {
+        let nextSession = middleware.sessions.first ?? TutorSession(
+            id: UUID(), tutorID: UUID(), title: "Cardiovascular Terminology Review",
+            description: "Deep dive into cardio terms", startsAt: Date().addingTimeInterval(7200),
+            durationMinutes: 45, priceCents: 4500, seatsAvailable: 10, seatsBooked: 3,
+            chapterIDs: [], status: .scheduled
+        )
+
+        return AppCard {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 HStack {
                     Image(systemName: "video.fill")
@@ -80,13 +126,13 @@ struct TutorDiscoveryView: View {
                         .font(AppTypography.caption1)
                         .foregroundColor(AppColor.diamond)
                     Spacer()
-                    Text("In 2 hours")
+                    Text(timeUntil(nextSession.startsAt))
                         .font(AppTypography.caption1)
                         .foregroundColor(AppColor.streakOrange)
                         .fontWeight(.medium)
                 }
 
-                Text("Cardiovascular Terminology Review")
+                Text(nextSession.title)
                     .font(AppTypography.headline)
                     .foregroundColor(AppColor.textPrimary)
 
@@ -101,8 +147,11 @@ struct TutorDiscoveryView: View {
                         .font(AppTypography.subheadline)
                         .foregroundColor(AppColor.textSecondary)
                     Spacer()
-                    PrimaryButton(title: "Join") {}
-                        .frame(width: 80)
+                    PrimaryButton(title: isJoining ? "Joining..." : "Join") {
+                        Task { await joinSession(nextSession) }
+                    }
+                    .frame(width: 100)
+                    .disabled(isJoining)
                 }
             }
         }
@@ -113,30 +162,119 @@ struct TutorDiscoveryView: View {
             SectionHeader(title: "Available Tutors", action: {}, actionLabel: "Filter")
 
             VStack(spacing: AppSpacing.sm) {
-                TutorAvatarCard(
-                    name: "Dr. Sarah Mitchell",
-                    specialty: "Cardiovascular & Respiratory",
-                    rating: 4.9,
-                    pricePerHour: "$45/hr"
-                )
-                TutorAvatarCard(
-                    name: "James Chen",
-                    specialty: "Nervous System & Special Senses",
-                    rating: 4.8,
-                    pricePerHour: "$38/hr"
-                )
-                TutorAvatarCard(
-                    name: "Dr. Amara Okafor",
-                    specialty: "Musculoskeletal & Integumentary",
-                    rating: 4.7,
-                    pricePerHour: "$42/hr"
-                )
-                TutorAvatarCard(
-                    name: "Emily Rodriguez",
-                    specialty: "Endocrine & Reproductive",
-                    rating: 4.6,
-                    pricePerHour: "$35/hr"
-                )
+                tutorCard(name: "Dr. Sarah Mitchell", specialty: "Cardiovascular & Respiratory", rating: 4.9, price: "$45/hr")
+                tutorCard(name: "James Chen", specialty: "Nervous System & Special Senses", rating: 4.8, price: "$38/hr")
+                tutorCard(name: "Dr. Amara Okafor", specialty: "Musculoskeletal & Integumentary", rating: 4.7, price: "$42/hr")
+                tutorCard(name: "Emily Rodriguez", specialty: "Endocrine & Reproductive", rating: 4.6, price: "$35/hr")
+            }
+        }
+    }
+
+    private func tutorCard(name: String, specialty: String, rating: Double, price: String) -> some View {
+        Button {
+            let session = TutorSession(
+                id: UUID(), tutorID: UUID(), title: "\(name) - Private Session",
+                description: specialty, startsAt: Date().addingTimeInterval(86400),
+                durationMinutes: 60, priceCents: Int(Double(price.replacingOccurrences(of: "$", with: "").replacingOccurrences(of: "/hr", with: ""))! * 100),
+                seatsAvailable: 1, seatsBooked: 0, chapterIDs: [], status: .scheduled
+            )
+            selectedSession = session
+        } label: {
+            TutorAvatarCard(name: name, specialty: specialty, rating: rating, pricePerHour: price)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Actions
+
+    private func joinSession(_ session: TutorSession) async {
+        isJoining = true
+        defer { isJoining = false }
+
+        if SupabaseManager.shared.isConfigured {
+            if let result = await middleware.createSessionRoom(sessionID: session.id) {
+                roomURL = result.url
+                roomToken = result.token
+                activeRoomSession = session
+            } else {
+                joinError = "Could not connect to session room. Please try again."
+            }
+        } else {
+            let demoURL = URL(string: "\(Config.dailyRoomBaseURL)/medlingo-demo-\(session.id.uuidString.prefix(8))")!
+            roomURL = demoURL
+            roomToken = "demo-token-\(UUID().uuidString.prefix(8))"
+            activeRoomSession = session
+        }
+    }
+
+    // MARK: - Helpers
+
+    private var filteredSessions: [TutorSession] {
+        let sessions = middleware.sessions
+        guard !searchText.isEmpty else { return sessions }
+        return sessions.filter {
+            $0.title.localizedCaseInsensitiveContains(searchText) ||
+            ($0.description ?? "").localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    private func timeUntil(_ date: Date) -> String {
+        let interval = date.timeIntervalSinceNow
+        if interval <= 0 { return "Now" }
+        let hours = Int(interval) / 3600
+        let minutes = (Int(interval) % 3600) / 60
+        if hours > 0 { return "In \(hours)h \(minutes)m" }
+        return "In \(minutes)m"
+    }
+
+    private func emptyState(icon: String, text: String) -> some View {
+        VStack(spacing: AppSpacing.sm) {
+            Image(systemName: icon)
+                .font(.largeTitle)
+                .foregroundColor(AppColor.textTertiary)
+            Text(text)
+                .font(AppTypography.body)
+                .foregroundColor(AppColor.textTertiary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppSpacing.xl)
+    }
+}
+
+struct SessionCard: View {
+    let session: TutorSession
+    let actionLabel: String
+
+    var body: some View {
+        AppCard {
+            HStack {
+                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                    Text(session.title)
+                        .font(AppTypography.headline)
+                        .foregroundColor(AppColor.textPrimary)
+                    Text(session.startsAt.formatted(date: .abbreviated, time: .shortened))
+                        .font(AppTypography.caption1)
+                        .foregroundColor(AppColor.textSecondary)
+                    HStack(spacing: AppSpacing.xs) {
+                        Label("\(session.durationMinutes) min", systemImage: "clock")
+                            .font(AppTypography.caption2)
+                            .foregroundColor(AppColor.textTertiary)
+                        Text("•")
+                            .foregroundColor(AppColor.textTertiary)
+                        Text("\(session.seatsAvailable - session.seatsBooked) seats left")
+                            .font(AppTypography.caption2)
+                            .foregroundColor(AppColor.emerald)
+                    }
+                }
+                Spacer()
+                VStack(spacing: AppSpacing.xxs) {
+                    Text("$\(String(format: "%.0f", Double(session.priceCents) / 100.0))")
+                        .font(AppTypography.headline)
+                        .foregroundColor(AppColor.gold)
+                    Text(actionLabel)
+                        .font(AppTypography.caption1)
+                        .foregroundColor(AppColor.diamond)
+                }
             }
         }
     }
@@ -144,4 +282,5 @@ struct TutorDiscoveryView: View {
 
 #Preview {
     TutorDiscoveryView()
+        .environment(DataMiddleware.shared)
 }
