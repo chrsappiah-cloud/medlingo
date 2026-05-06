@@ -306,10 +306,36 @@ struct HelpCenterView: View {
                 FAQRow(question: "Can I study offline?", answer: "Yes! Previously loaded stages and flashcards are cached locally for offline access.")
             }
             .listRowBackground(AppColor.surface)
-            Section("Contact") {
+            Section("Contact Us") {
                 Link(destination: URL(string: "mailto:\(AppConstants.supportEmail)")!) {
-                    Label(AppConstants.supportEmail, systemImage: "envelope.fill")
-                        .foregroundColor(AppColor.diamond)
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Email Support")
+                                .font(AppTypography.subheadline)
+                                .foregroundColor(AppColor.textPrimary)
+                            Text(AppConstants.supportEmail)
+                                .font(AppTypography.caption1)
+                                .foregroundColor(AppColor.textSecondary)
+                        }
+                    } icon: {
+                        Image(systemName: "envelope.fill")
+                            .foregroundColor(AppColor.diamond)
+                    }
+                }
+                Link(destination: AppConstants.websiteURL) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Website")
+                                .font(AppTypography.subheadline)
+                                .foregroundColor(AppColor.textPrimary)
+                            Text("wcs-full.vercel.app")
+                                .font(AppTypography.caption1)
+                                .foregroundColor(AppColor.textSecondary)
+                        }
+                    } icon: {
+                        Image(systemName: "globe")
+                            .foregroundColor(AppColor.gold)
+                    }
                 }
             }
             .listRowBackground(AppColor.surface)

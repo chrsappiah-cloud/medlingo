@@ -7,8 +7,14 @@ import SwiftData
 final class SyncCoordinator {
     static let shared = SyncCoordinator()
 
-    private let container: CKContainer
-    private let privateDB: CKDatabase
+    private var _container: CKContainer?
+    private var container: CKContainer {
+        if let c = _container { return c }
+        let c = CKContainer(identifier: Config.cloudKitContainerID)
+        _container = c
+        return c
+    }
+    private var privateDB: CKDatabase { container.privateCloudDatabase }
 
     private(set) var syncState: SyncState = .idle
     private(set) var lastSyncDate: Date?
@@ -18,10 +24,7 @@ final class SyncCoordinator {
         case idle, syncing, error, offline
     }
 
-    private init() {
-        self.container = CKContainer(identifier: Config.cloudKitContainerID)
-        self.privateDB = container.privateCloudDatabase
-    }
+    private init() {}
 
     // MARK: - Full Sync
 

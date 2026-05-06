@@ -114,10 +114,30 @@ final class StoreKitService: PurchaseServiceProtocol {
     }
 
     private func verifyOnServer(transaction: Transaction) async throws {
-        // POST signed transaction payload to Supabase Edge Function
-        // for server-side reconciliation and entitlement writing
-        // TODO: Implement backend verification endpoint
+        let signedData = String(data: transaction.jsonRepresentation, encoding: .utf8) ?? ""
+        guard !signedData.isEmpty else { throw StoreError.serverVerificationFailed }
+
+        let payload = try JSONEncoder().encode(ReceiptVerificationPayload(
+            transactionId: String(transaction.id),
+            originalTransactionId: String(transaction.originalID),
+            productId: transaction.productID,
+            signedPayload: signedData
+        ))
+
+        let client = SupabaseManager.shared.functionsClient
+        try await client.request(Endpoint(
+            path: "verify-receipt",
+            method: .post,
+            body: payload
+        ))
     }
+}
+
+private struct ReceiptVerificationPayload: Encodable {
+    let transactionId: String
+    let originalTransactionId: String
+    let productId: String
+    let signedPayload: String
 }
 
 enum StoreError: Error, LocalizedError {

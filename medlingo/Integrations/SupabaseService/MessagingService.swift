@@ -3,16 +3,20 @@ import Foundation
 @MainActor
 final class MessagingService: MessagingServiceProtocol {
     private let client: NetworkClientProtocol
+    private var realtimeTask: Task<Void, Never>?
+    private var lastSeenTimestamp: Date?
 
     init(client: NetworkClientProtocol? = nil) {
         self.client = client ?? SupabaseManager.shared.networkClient
     }
 
     func fetchMessages(for userID: UUID) async throws -> [ChatMessage] {
-        try await client.request(Endpoint(path: "messages", queryItems: [
+        let messages: [ChatMessage] = try await client.request(Endpoint(path: "messages", queryItems: [
             URLQueryItem(name: "or", value: "(sender_id.eq.\(userID.uuidString),recipient_id.eq.\(userID.uuidString))"),
             URLQueryItem(name: "order", value: "sent_at.asc")
         ]))
+        lastSeenTimestamp = messages.last?.sentAt ?? Date()
+        return messages
     }
 
     func sendMessage(from senderID: UUID, to recipientID: UUID, content: String) async throws -> ChatMessage {
@@ -35,14 +39,41 @@ final class MessagingService: MessagingServiceProtocol {
         ))
     }
 
-    /// Realtime subscription for incoming messages.
-    /// In production, this would use Supabase Realtime WebSocket channels
-    /// to listen for INSERT events on the messages table filtered by recipient_id.
-    /// Placeholder: polling or WebSocket integration to be added.
+    /// Subscribes to new messages using Supabase Realtime-style polling.
+    /// Polls for messages newer than the last seen timestamp every 3 seconds.
+    /// When Supabase Swift SDK adds native Realtime, swap to WebSocket channel.
     func subscribeToMessages(userID: UUID, callback: @escaping ([ChatMessage]) -> Void) {
-        // TODO: Integrate Supabase Realtime channel subscription
-        // channel = supabase.realtime.channel("messages:\(userID)")
-        // channel.on(.insert) { message in callback([message]) }
-        // channel.subscribe()
+        realtimeTask?.cancel()
+        realtimeTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                guard !Task.isCancelled, let self else { return }
+
+                let since = self.lastSeenTimestamp ?? Date.distantPast
+                let isoTimestamp = ISO8601DateFormatter().string(from: since)
+
+                do {
+                    let newMessages: [ChatMessage] = try await self.client.request(Endpoint(
+                        path: "messages",
+                        queryItems: [
+                            URLQueryItem(name: "recipient_id", value: "eq.\(userID.uuidString)"),
+                            URLQueryItem(name: "sent_at", value: "gt.\(isoTimestamp)"),
+                            URLQueryItem(name: "order", value: "sent_at.asc")
+                        ]
+                    ))
+                    if !newMessages.isEmpty {
+                        self.lastSeenTimestamp = newMessages.last?.sentAt
+                        callback(newMessages)
+                    }
+                } catch {
+                    // Network blip — retry on next cycle
+                }
+            }
+        }
+    }
+
+    func unsubscribe() {
+        realtimeTask?.cancel()
+        realtimeTask = nil
     }
 }

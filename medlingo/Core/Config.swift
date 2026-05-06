@@ -17,4 +17,8 @@ enum Config {
     static let awsBackupBucket: String = infoPlist["AWS_BACKUP_BUCKET"] as? String ?? "medlingo-backups"
     static let audioStorageBucket: String = "audio"
     static let mediaStorageBucket: String = "media"
+
+    static let aiVideoProvider: String = infoPlist["AI_VIDEO_PROVIDER"] as? String ?? "heygen"
+    static let aiVideoDefaultAvatarID: String = infoPlist["AI_VIDEO_DEFAULT_AVATAR_ID"] as? String ?? ""
+    static let aiVideoDefaultVoiceID: String = infoPlist["AI_VIDEO_DEFAULT_VOICE_ID"] as? String ?? ""
 }
