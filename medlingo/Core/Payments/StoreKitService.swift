@@ -1,0 +1,135 @@
+import Foundation
+import StoreKit
+
+protocol PurchaseServiceProtocol {
+    func loadProducts() async throws -> [Product]
+    func purchase(_ product: Product) async throws -> PurchaseResult
+    func syncEntitlements() async throws
+    func restorePurchases() async throws
+}
+
+enum PurchaseResult {
+    case success(transactionID: String)
+    case pending
+    case cancelled
+    case failed(Error)
+}
+
+@MainActor
+@Observable
+final class StoreKitService: PurchaseServiceProtocol {
+    private(set) var availableProducts: [Product] = []
+    private(set) var purchasedProductIDs: Set<String> = []
+    private(set) var isLoading = false
+
+    private var transactionListener: Task<Void, Error>?
+
+    static let productIdentifiers: Set<String> = [
+        "com.medlingo.premium.monthly",
+        "com.medlingo.premium.yearly",
+        "com.medlingo.sessions.5pack",
+        "com.medlingo.sessions.10pack",
+        "com.medlingo.chapter.unlock"
+    ]
+
+    func startListening() {
+        transactionListener = Task {
+            for await result in Transaction.updates {
+                do {
+                    let transaction = try Self.checkVerified(result)
+                    await updatePurchasedProducts()
+                    await transaction.finish()
+                } catch {
+                    // Transaction verification failed
+                }
+            }
+        }
+    }
+
+    func stopListening() {
+        transactionListener?.cancel()
+        transactionListener = nil
+    }
+
+    func loadProducts() async throws -> [Product] {
+        isLoading = true
+        defer { isLoading = false }
+        let products = try await Product.products(for: Self.productIdentifiers)
+        availableProducts = products.sorted { $0.price < $1.price }
+        return availableProducts
+    }
+
+    func purchase(_ product: Product) async throws -> PurchaseResult {
+        isLoading = true
+        defer { isLoading = false }
+
+        let result = try await product.purchase()
+
+        switch result {
+        case .success(let verification):
+            let transaction = try Self.checkVerified(verification)
+            await updatePurchasedProducts()
+            await transaction.finish()
+            // Forward signed transaction to backend for server-side reconciliation
+            try await verifyOnServer(transaction: transaction)
+            return .success(transactionID: String(transaction.id))
+
+        case .pending:
+            return .pending
+
+        case .userCancelled:
+            return .cancelled
+
+        @unknown default:
+            return .cancelled
+        }
+    }
+
+    func syncEntitlements() async throws {
+        await updatePurchasedProducts()
+    }
+
+    func restorePurchases() async throws {
+        try await AppStore.sync()
+        await updatePurchasedProducts()
+    }
+
+    private func updatePurchasedProducts() async {
+        var purchased: Set<String> = []
+        for await result in Transaction.currentEntitlements {
+            if let transaction = try? Self.checkVerified(result) {
+                purchased.insert(transaction.productID)
+            }
+        }
+        purchasedProductIDs = purchased
+    }
+
+    nonisolated private static func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+        switch result {
+        case .unverified:
+            throw StoreError.verificationFailed
+        case .verified(let safe):
+            return safe
+        }
+    }
+
+    private func verifyOnServer(transaction: Transaction) async throws {
+        // POST signed transaction payload to Supabase Edge Function
+        // for server-side reconciliation and entitlement writing
+        // TODO: Implement backend verification endpoint
+    }
+}
+
+enum StoreError: Error, LocalizedError {
+    case verificationFailed
+    case purchaseFailed
+    case serverVerificationFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .verificationFailed: return "Transaction verification failed"
+        case .purchaseFailed: return "Purchase could not be completed"
+        case .serverVerificationFailed: return "Server verification failed"
+        }
+    }
+}

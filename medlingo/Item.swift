@@ -1,17 +1,12 @@
-//
-//  Item.swift
-//  medlingo
-//
-//  Created by Christopher Appiah-Thompson  on 6/5/2026.
-//
-
 import Foundation
 import SwiftData
 
+// Legacy template model — retained for build compatibility.
+// Replace with SharedModels in production.
 @Model
 final class Item {
     var timestamp: Date
-    
+
     init(timestamp: Date) {
         self.timestamp = timestamp
     }

@@ -1,61 +1,66 @@
-//
-//  ContentView.swift
-//  medlingo
-//
-//  Created by Christopher Appiah-Thompson  on 6/5/2026.
-//
-
 import SwiftUI
-import SwiftData
 
-struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+struct MainTabView: View {
+    @State private var selectedTab: AppTab = .learn
+
+    enum AppTab: String, CaseIterable {
+        case learn = "Learn"
+        case practice = "Practice"
+        case sessions = "Sessions"
+        case progress = "Progress"
+        case account = "Account"
+
+        var icon: String {
+            switch self {
+            case .learn: return "book.fill"
+            case .practice: return "brain.head.profile"
+            case .sessions: return "video.fill"
+            case .progress: return "chart.bar.fill"
+            case .account: return "person.fill"
+            }
+        }
+    }
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        TabView(selection: $selectedTab) {
+            HomeView()
+                .tabItem {
+                    Label(AppTab.learn.rawValue, systemImage: AppTab.learn.icon)
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
+                .tag(AppTab.learn)
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
+            PracticeHubView()
+                .tabItem {
+                    Label(AppTab.practice.rawValue, systemImage: AppTab.practice.icon)
+                }
+                .tag(AppTab.practice)
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+            TutorDiscoveryView()
+                .tabItem {
+                    Label(AppTab.sessions.rawValue, systemImage: AppTab.sessions.icon)
+                }
+                .tag(AppTab.sessions)
+
+            ProgressDashboardView()
+                .tabItem {
+                    Label(AppTab.progress.rawValue, systemImage: AppTab.progress.icon)
+                }
+                .tag(AppTab.progress)
+
+            AccountView()
+                .tabItem {
+                    Label(AppTab.account.rawValue, systemImage: AppTab.account.icon)
+                }
+                .tag(AppTab.account)
         }
+        .tint(AppColor.gold)
+        .preferredColorScheme(.dark)
     }
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+    MainTabView()
+        .environment(AppState.shared)
+        .environment(DataMiddleware.shared)
+        .environment(NavigationRouter())
 }
