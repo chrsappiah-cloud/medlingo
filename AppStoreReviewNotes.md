@@ -9,7 +9,7 @@
 | Unit tests (45) + performance gates | ✅ |
 | UI tests (tab overflow, navigation, flows) | ✅ |
 | No CloudKit entitlement (App Store compliance) | ✅ |
-| Push entitlement (development — switch to production in portal before release) | ⚠️ Update in Apple Developer |
+| Push entitlement (`production` in entitlements) | ✅ |
 | Privacy Policy URL live | ✅ https://wcs-full.vercel.app/privacy |
 | Demo / offline learning path for reviewers | ✅ |
 | Sign in optional for core content | ✅ |
