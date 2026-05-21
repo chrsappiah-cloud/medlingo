@@ -4,6 +4,7 @@
 
 | Requirement | Status |
 |-------------|--------|
+| Minimum iOS 18.0 (broad device support) | ✅ |
 | Clean compile (Release) | ✅ |
 | Unit tests (45) + performance gates | ✅ |
 | UI tests (tab overflow, navigation, flows) | ✅ |

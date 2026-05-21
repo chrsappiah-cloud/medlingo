@@ -42,17 +42,24 @@ jobs:
       - name: Prepare simulator
         run: |
           xcodebuild -downloadPlatform iOS
-          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone 16|iPhone 17|CI iPhone" | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' | head -1)
-          if [ -z "$SIM_ID" ]; then
-            RUNTIME=$(xcrun simctl list runtimes available -j | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((r['identifier'] for r in d['runtimes'] if r['isAvailable'] and 'iOS' in r['name']), ''))")
-            SIM_ID=$(xcrun simctl create "CI iPhone" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" "$RUNTIME" 2>/dev/null || true)
-          fi
-          if [ -z "$SIM_ID" ]; then
-            echo "::error::No iOS simulator available for unit tests"
+          RUNTIME_ID=$(xcrun simctl list runtimes available -j | python3 -c "
+          import json, sys
+          runtimes = json.load(sys.stdin)['runtimes']
+          for r in sorted(runtimes, key=lambda x: x['name'], reverse=True):
+              if r['isAvailable'] and r['name'].startswith('iOS'):
+                  print(r['identifier'])
+                  break
+          ")
+          if [ -z "$RUNTIME_ID" ]; then
+            echo "::error::No iOS simulator runtime available"
+            xcrun simctl list runtimes
             exit 1
           fi
+          SIM_ID=$(xcrun simctl create "CI iPhone Medlingo" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" "$RUNTIME_ID")
+          xcrun simctl boot "$SIM_ID"
+          xcrun simctl bootstatus "$SIM_ID" -b
           echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
-          xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+          xcodebuild -showdestinations -project medlingo.xcodeproj -scheme medlingo | grep "$SIM_ID" || true
 
       - name: Run Unit Tests
         run: |
@@ -96,13 +103,22 @@ jobs:
       - name: Prepare simulator
         run: |
           xcodebuild -downloadPlatform iOS
-          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone 16|iPhone 17|CI iPhone" | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' | head -1)
-          if [ -z "$SIM_ID" ]; then
-            RUNTIME=$(xcrun simctl list runtimes available -j | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((r['identifier'] for r in d['runtimes'] if r['isAvailable'] and 'iOS' in r['name']), ''))")
-            SIM_ID=$(xcrun simctl create "CI iPhone" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" "$RUNTIME")
+          RUNTIME_ID=$(xcrun simctl list runtimes available -j | python3 -c "
+          import json, sys
+          runtimes = json.load(sys.stdin)['runtimes']
+          for r in sorted(runtimes, key=lambda x: x['name'], reverse=True):
+              if r['isAvailable'] and r['name'].startswith('iOS'):
+                  print(r['identifier'])
+                  break
+          ")
+          if [ -z "$RUNTIME_ID" ]; then
+            echo "::error::No iOS simulator runtime available"
+            exit 1
           fi
+          SIM_ID=$(xcrun simctl create "CI iPhone Medlingo UI" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" "$RUNTIME_ID")
+          xcrun simctl boot "$SIM_ID"
+          xcrun simctl bootstatus "$SIM_ID" -b
           echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
-          xcrun simctl boot "$SIM_ID" 2>/dev/null || true
 
       - name: Run UI Tests
         run: |
