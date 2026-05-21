@@ -65,6 +65,12 @@ struct HomeView: View {
             TutorDiscoveryView()
         case .exercise:
             QuizView(exercise: nil)
+        case .generationStudio:
+            GenerationStudioView()
+        case .collectionGallery:
+            CollectionGalleryView()
+        case .artworkDetail:
+            CollectionGalleryView()
         }
     }
 

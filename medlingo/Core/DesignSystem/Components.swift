@@ -86,9 +86,9 @@ struct AppCard<Content: View>: View {
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.lg)
-                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    .stroke(AppColor.diamond.opacity(0.10), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
+            .shadow(color: AppColor.diamond.opacity(0.06), radius: 12, x: 0, y: 6)
     }
 }
 
@@ -108,7 +108,7 @@ struct GlassCard<Content: View>: View {
                 RoundedRectangle(cornerRadius: AppRadius.lg)
                     .stroke(
                         LinearGradient(
-                            colors: [.white.opacity(0.2), .white.opacity(0.05)],
+                            colors: [AppColor.diamond.opacity(0.25), AppColor.diamond.opacity(0.06)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -124,7 +124,10 @@ struct SectionHeader: View {
     var actionLabel: String = "See All"
 
     var body: some View {
-        HStack {
+        HStack(spacing: AppSpacing.xs) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(AppColor.diamondPowerGradient)
+                .frame(width: 3, height: 18)
             Text(title)
                 .font(AppTypography.title3)
                 .foregroundColor(AppColor.textPrimary)
@@ -132,7 +135,7 @@ struct SectionHeader: View {
             if let action {
                 Button(actionLabel, action: action)
                     .font(AppTypography.subheadline)
-                    .foregroundColor(AppColor.gold)
+                    .foregroundColor(AppColor.diamond)
             }
         }
     }
@@ -223,12 +226,13 @@ struct StatTile: View {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundColor(color)
-                .shadow(color: color.opacity(0.5), radius: 4)
+                .shadow(color: color.opacity(0.6), radius: 6)
             Text(value)
                 .font(AppTypography.statValue)
                 .foregroundColor(AppColor.textPrimary)
             Text(title)
                 .font(AppTypography.caption1)
+                .fontWeight(.medium)
                 .foregroundColor(AppColor.textSecondary)
         }
         .frame(maxWidth: .infinity)
@@ -237,8 +241,9 @@ struct StatTile: View {
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         .overlay(
             RoundedRectangle(cornerRadius: AppRadius.md)
-                .stroke(color.opacity(0.2), lineWidth: 1)
+                .stroke(color.opacity(0.25), lineWidth: 1)
         )
+        .shadow(color: color.opacity(0.08), radius: 8, x: 0, y: 4)
     }
 }
 

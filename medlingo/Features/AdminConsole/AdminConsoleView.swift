@@ -1,10 +1,13 @@
 import SwiftUI
 
 struct AdminConsoleView: View {
+    @State private var showStudio = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                    creatorStudioBanner
                     metricsOverview
                     quickActions
                     recentActivitySection
@@ -22,17 +25,72 @@ struct AdminConsoleView: View {
             .background(AppColor.background)
             .navigationTitle("Admin Console")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .fullScreenCover(isPresented: $showStudio) {
+                NavigationStack {
+                    GenerationStudioView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Close") { showStudio = false }
+                                    .foregroundColor(AppColor.diamond)
+                            }
+                        }
+                }
+            }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var creatorStudioBanner: some View {
+        Button { showStudio = true } label: {
+            HStack(spacing: AppSpacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(AppColor.diamond.opacity(0.12))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "wand.and.stars")
+                        .font(.system(size: 24))
+                        .foregroundStyle(AppColor.diamondPowerGradient)
+                        .shadow(color: AppColor.diamond.opacity(0.5), radius: 6)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("AI Generation Studio")
+                        .font(AppTypography.headline)
+                        .foregroundColor(AppColor.textPrimary)
+                    Text("Create art & video with open-source AI")
+                        .font(AppTypography.caption1)
+                        .foregroundColor(AppColor.textSecondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.subheadline)
+                    .foregroundColor(AppColor.diamond)
+            }
+            .padding(AppSpacing.md)
+            .background(
+                LinearGradient(
+                    colors: [AppColor.diamond.opacity(0.08), AppColor.surface],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .stroke(AppColor.diamond.opacity(0.2), lineWidth: 1)
+            )
+        }
     }
 
     private var metricsOverview: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             SectionHeader(title: "Overview")
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppSpacing.sm) {
-                AdminMetricCard(title: "Active Learners", value: "1,284", trend: "+12%", icon: "person.3.fill", color: AppColor.primary)
+                AdminMetricCard(title: "Active Learners", value: "1,284", trend: "+12%", icon: "person.3.fill", color: AppColor.diamond)
                 AdminMetricCard(title: "Revenue (MTD)", value: "$8,450", trend: "+8%", icon: "dollarsign.circle.fill", color: AppColor.success)
-                AdminMetricCard(title: "Active Subscriptions", value: "856", trend: "+5%", icon: "creditcard.fill", color: AppColor.info)
+                AdminMetricCard(title: "Active Subscriptions", value: "856", trend: "+5%", icon: "creditcard.fill", color: AppColor.diamondDeep)
                 AdminMetricCard(title: "Sessions This Week", value: "47", trend: "+15%", icon: "video.fill", color: AppColor.emerald)
             }
         }
@@ -89,9 +147,11 @@ struct AdminMetricCard: View {
             HStack {
                 Image(systemName: icon)
                     .foregroundColor(color)
+                    .shadow(color: color.opacity(0.5), radius: 4)
                 Spacer()
                 Text(trend)
                     .font(AppTypography.caption2)
+                    .fontWeight(.bold)
                     .foregroundColor(AppColor.success)
             }
             Text(value)
@@ -104,7 +164,11 @@ struct AdminMetricCard: View {
         .padding(AppSpacing.md)
         .background(AppColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
-        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.md)
+                .stroke(color.opacity(0.15), lineWidth: 1)
+        )
+        .shadow(color: color.opacity(0.06), radius: 6, x: 0, y: 3)
     }
 }
 

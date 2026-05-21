@@ -10,11 +10,14 @@ struct TutorDiscoveryView: View {
     @State private var roomToken: String?
     @State private var isJoining = false
     @State private var joinError: String?
+    @State private var showAITutor = false
+    @State private var aiTutorTopic: String = ""
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                    aiTutorBanner
                     upcomingSessionBanner
                     availableSessionsSection
                     bookedSessionsSection
@@ -36,6 +39,9 @@ struct TutorDiscoveryView: View {
                     SessionRoomView(session: session, roomURL: url, token: token)
                 }
             }
+            .fullScreenCover(isPresented: $showAITutor) {
+                AITutorSessionView(topic: aiTutorTopic, chapterContext: "")
+            }
             .alert("Join Error", isPresented: .init(get: { joinError != nil }, set: { if !$0 { joinError = nil } })) {
                 Button("OK") { joinError = nil }
             } message: {
@@ -44,6 +50,69 @@ struct TutorDiscoveryView: View {
         }
         .preferredColorScheme(.dark)
         .task { await middleware.loadSessions() }
+    }
+
+    private var aiTutorBanner: some View {
+        AppCard {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                HStack {
+                    Image(systemName: "sparkles")
+                        .foregroundColor(AppColor.diamond)
+                        .shadow(color: AppColor.diamond.opacity(0.6), radius: 4)
+                    Text("AI Tutor")
+                        .font(AppTypography.caption1)
+                        .foregroundColor(AppColor.diamond)
+                    Spacer()
+                    Text("Instant")
+                        .font(AppTypography.caption2)
+                        .foregroundColor(AppColor.emerald)
+                        .padding(.horizontal, AppSpacing.xs)
+                        .padding(.vertical, 2)
+                        .background(AppColor.emerald.opacity(0.15))
+                        .clipShape(Capsule())
+                }
+
+                Text("AI Avatar Sessions")
+                    .font(AppTypography.headline)
+                    .foregroundColor(AppColor.textPrimary)
+
+                Text("Get a personalized video lesson from an AI tutor on any medical terminology topic — available 24/7.")
+                    .font(AppTypography.caption1)
+                    .foregroundColor(AppColor.textSecondary)
+                    .lineSpacing(2)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: AppSpacing.xs) {
+                        aiTopicChip("Cardiovascular Terms")
+                        aiTopicChip("Nervous System")
+                        aiTopicChip("Musculoskeletal")
+                        aiTopicChip("Pharmacology Prefixes")
+                        aiTopicChip("Surgical Suffixes")
+                    }
+                }
+
+                PrimaryButton(title: "Start AI Session") {
+                    aiTutorTopic = "Medical Terminology Overview"
+                    showAITutor = true
+                }
+            }
+        }
+    }
+
+    private func aiTopicChip(_ topic: String) -> some View {
+        Button {
+            aiTutorTopic = topic
+            showAITutor = true
+        } label: {
+            Text(topic)
+                .font(AppTypography.caption2)
+                .foregroundColor(AppColor.diamond)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.vertical, AppSpacing.xxs)
+                .background(AppColor.diamond.opacity(0.1))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(AppColor.diamond.opacity(0.3), lineWidth: 0.5))
+        }
     }
 
     private var availableSessionsSection: some View {

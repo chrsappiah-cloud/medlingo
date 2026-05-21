@@ -9,12 +9,18 @@ protocol CloudKitSyncProtocol {
 }
 
 final class CloudKitSyncService: CloudKitSyncProtocol {
-    private let container: CKContainer
-    private let privateDB: CKDatabase
+    private let containerIdentifier: String
+    private var _container: CKContainer?
+    private var container: CKContainer {
+        if let c = _container { return c }
+        let c = CKContainer(identifier: containerIdentifier)
+        _container = c
+        return c
+    }
+    private var privateDB: CKDatabase { container.privateCloudDatabase }
 
     init(containerIdentifier: String = "iCloud.com.medlingo.app") {
-        self.container = CKContainer(identifier: containerIdentifier)
-        self.privateDB = container.privateCloudDatabase
+        self.containerIdentifier = containerIdentifier
     }
 
     func syncProgress(chapters: [UUID: Double]) async throws {

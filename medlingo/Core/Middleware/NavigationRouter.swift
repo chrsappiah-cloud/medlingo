@@ -5,6 +5,8 @@ import SwiftUI
 final class NavigationRouter {
     var learnPath = NavigationPath()
     var practicePath = NavigationPath()
+    var studioPath = NavigationPath()
+    var collectionPath = NavigationPath()
     var sessionsPath = NavigationPath()
     var progressPath = NavigationPath()
     var accountPath = NavigationPath()
@@ -25,6 +27,9 @@ final class NavigationRouter {
         case subscription
         case settings
         case adminConsole
+        case generationStudio
+        case collectionGallery
+        case artworkDetail(artworkID: UUID)
     }
 
     func navigateToLearn(_ destination: Destination) {
@@ -44,6 +49,8 @@ final class NavigationRouter {
     func resetAll() {
         learnPath = NavigationPath()
         practicePath = NavigationPath()
+        studioPath = NavigationPath()
+        collectionPath = NavigationPath()
         sessionsPath = NavigationPath()
         progressPath = NavigationPath()
         accountPath = NavigationPath()

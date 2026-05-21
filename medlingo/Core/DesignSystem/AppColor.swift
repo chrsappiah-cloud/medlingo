@@ -2,9 +2,9 @@ import SwiftUI
 
 enum AppColor {
     // Premium luxury primaries
-    static let primary = Color(hex: "1B2838")
-    static let primaryDark = Color(hex: "0D1B2A")
-    static let primaryLight = Color(hex: "415A77")
+    static let primary = Color(hex: "1E2B45")
+    static let primaryDark = Color(hex: "0F1A2E")
+    static let primaryLight = Color(hex: "4A6FA5")
 
     // Accent metals
     static let gold = Color(hex: "D4AF37")
@@ -14,6 +14,8 @@ enum AppColor {
     static let diamond = Color(hex: "B9F2FF")
     static let diamondDeep = Color(hex: "7EC8E3")
     static let diamondWhite = Color(hex: "E8F8FF")
+    static let diamondBright = Color(hex: "D6F8FF")
+    static let diamondGlow = Color(hex: "A0E8FF")
 
     static let emerald = Color(hex: "50C878")
     static let emeraldDeep = Color(hex: "046307")
@@ -26,16 +28,17 @@ enum AppColor {
     static let platinum = Color(hex: "E5E4E2")
     static let platinumDark = Color(hex: "8E8D8A")
 
-    // Surfaces
-    static let background = Color(hex: "0D1117")
-    static let surface = Color(hex: "161B22")
-    static let surfaceElevated = Color(hex: "1C2432")
-    static let surfaceGlass = Color.white.opacity(0.06)
+    // Surfaces — lifted for readability
+    static let background = Color(hex: "141C2B")
+    static let surface = Color(hex: "1C2840")
+    static let surfaceElevated = Color(hex: "263352")
+    static let surfaceGlass = Color.white.opacity(0.08)
+    static let surfaceBright = Color(hex: "2F3E5E")
 
-    // Text
-    static let textPrimary = Color(hex: "F0F6FC")
-    static let textSecondary = Color(hex: "8B949E")
-    static let textTertiary = Color(hex: "484F58")
+    // Text — high-contrast for readability
+    static let textPrimary = Color(hex: "FFFFFF")
+    static let textSecondary = Color(hex: "A8B8D0")
+    static let textTertiary = Color(hex: "6B7FA0")
 
     // Status
     static let success = Color(hex: "50C878")
@@ -79,6 +82,18 @@ enum AppColor {
         endPoint: .bottomTrailing
     )
 
+    static let diamondPowerGradient = LinearGradient(
+        colors: [Color(hex: "7EC8E3"), Color(hex: "B9F2FF"), Color(hex: "D6F8FF"), Color(hex: "B9F2FF")],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    static let diamondDarkGradient = LinearGradient(
+        colors: [Color(hex: "0F1A2E"), Color(hex: "1C2840"), Color(hex: "263352")],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
     static let emeraldGradient = LinearGradient(
         colors: [Color(hex: "046307"), Color(hex: "50C878"), Color(hex: "A8E6CF")],
         startPoint: .topLeading,
@@ -86,16 +101,20 @@ enum AppColor {
     )
 
     static let darkGradient = LinearGradient(
-        colors: [Color(hex: "0D1117"), Color(hex: "161B22"), Color(hex: "1C2432")],
+        colors: [Color(hex: "141C2B"), Color(hex: "1C2840"), Color(hex: "263352")],
         startPoint: .top,
         endPoint: .bottom
     )
 
     static let heroGradient = LinearGradient(
-        colors: [Color(hex: "1B2838"), Color(hex: "0D1B2A")],
+        colors: [Color(hex: "1E2B45"), Color(hex: "141C2B")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
+
+    // Tab bar diamond accent
+    static let tabActiveDiamond = Color(hex: "B9F2FF")
+    static let tabInactive = Color(hex: "5A6B85")
 }
 
 extension Color {
