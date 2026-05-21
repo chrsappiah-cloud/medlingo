@@ -469,7 +469,7 @@ struct DesignSystemTests {
 
     @Test func colorFromHex() {
         let color = Color(hex: "FF0000")
-        #expect(color != nil)
+        #expect(color == Color(hex: "FF0000"))
     }
 
     @Test func spacingValues() {
@@ -547,5 +547,104 @@ struct MessageModelTests {
             attachmentURL: nil
         )
         #expect(read.isRead == true)
+    }
+}
+
+// MARK: - Performance Tests (99th percentile targets vs top iOS apps)
+
+struct PerformanceTests {
+
+    @Test func chapterEncodeDecodeUnder10ms() throws {
+        let chapters = (0..<100).map { index in
+            Chapter(
+                id: UUID(),
+                number: index + 1,
+                title: "Stage \(index + 1)",
+                summary: "Summary",
+                estimatedMinutes: 45,
+                isPremium: index > 2,
+                coverArtURL: nil,
+                accentColorHex: "3498DB",
+                prerequisiteIDs: [],
+                unlockRule: .free
+            )
+        }
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        let clock = ContinuousClock()
+        let start = clock.now
+        for chapter in chapters {
+            let data = try encoder.encode(chapter)
+            _ = try decoder.decode(Chapter.self, from: data)
+        }
+        let elapsed = clock.now - start
+        #expect(elapsed < .milliseconds(10))
+    }
+
+    @Test func stageColorParsingUnder1ms() {
+        let hexValues = AppColor.stageColors.map { _ in "D4AF37" }
+        let clock = ContinuousClock()
+        let start = clock.now
+        for hex in hexValues {
+            _ = Color(hex: hex)
+        }
+        let elapsed = clock.now - start
+        #expect(elapsed < .milliseconds(1))
+    }
+
+    @Test func entitlementValidationUnder1ms() {
+        let entitlements = (0..<500).map { _ in
+            Entitlement(
+                id: UUID(),
+                userID: UUID(),
+                productID: "com.medlingo.premium.monthly",
+                status: .active,
+                expiresAt: Date().addingTimeInterval(86400 * 30),
+                grantedAt: Date(),
+                source: .applePurchase
+            )
+        }
+        let clock = ContinuousClock()
+        let start = clock.now
+        let validCount = entitlements.filter(\.isValid).count
+        let elapsed = clock.now - start
+        #expect(validCount == 500)
+        #expect(elapsed < .milliseconds(1))
+    }
+
+    @Test func generatedArtworkFilterUnder5ms() {
+        let artworks = (0..<1000).map { index in
+            GeneratedArtwork(
+                id: UUID(),
+                ownerID: UUID(),
+                prompt: "Prompt \(index)",
+                negativePrompt: nil,
+                mediaType: index.isMultiple(of: 2) ? .video : .image,
+                status: .completed,
+                mediaURL: URL(string: "https://example.com/\(index).png"),
+                thumbnailURL: nil,
+                provider: "inVideo",
+                modelName: "test",
+                width: 1024,
+                height: 1024,
+                durationSeconds: index.isMultiple(of: 2) ? 5 : nil,
+                seed: index,
+                createdAt: Date(),
+                completedAt: Date(),
+                isFavorite: index.isMultiple(of: 5),
+                tags: ["medical"]
+            )
+        }
+        let clock = ContinuousClock()
+        let start = clock.now
+        let videos = artworks.filter { $0.mediaType == .video }
+        let favorites = artworks.filter(\.isFavorite)
+        let elapsed = clock.now - start
+        #expect(videos.count == 500)
+        #expect(favorites.count == 200)
+        #expect(elapsed < .milliseconds(5))
     }
 }

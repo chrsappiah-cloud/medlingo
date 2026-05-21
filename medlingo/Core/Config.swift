@@ -21,4 +21,10 @@ enum Config {
     static let aiVideoProvider: String = infoPlist["AI_VIDEO_PROVIDER"] as? String ?? "heygen"
     static let aiVideoDefaultAvatarID: String = infoPlist["AI_VIDEO_DEFAULT_AVATAR_ID"] as? String ?? ""
     static let aiVideoDefaultVoiceID: String = infoPlist["AI_VIDEO_DEFAULT_VOICE_ID"] as? String ?? ""
+
+    // Open-source AI art/video generation via Replicate
+    static let replicateAPIToken: String = infoPlist["REPLICATE_API_TOKEN"] as? String ?? ""
+    static let defaultImageModel: String = infoPlist["AI_IMAGE_MODEL"] as? String ?? "stability-ai/sdxl"
+    static let defaultVideoModel: String = infoPlist["AI_VIDEO_MODEL"] as? String ?? "stability-ai/stable-video-diffusion"
+    static let generationStorageBucket: String = "generated-artworks"
 }

@@ -37,12 +37,12 @@ https://wcs-full.vercel.app
 https://wcs-full.vercel.app/privacy
 
 ## What's New in This Version
-Initial release — Learn medical terminology with AI-powered avatar sessions, structured lessons, pronunciation practice, and spaced repetition.
+Initial release — Structured medical terminology stages, interactive Practice Lab (flashcards, word builder, labeling, quizzes), Collection gallery for study visuals, tutor session discovery, and StoreKit 2 Premium subscriptions. Polished diamond-and-gold UI with performance tuned to top-tier education apps.
 
 ## App Review Information
 - **Contact:** Christopher Appiah-Thompson
 - **Email:** christopher.appiahthompson@myworldclass.org
-- **Notes:** The app uses demo mode for AI avatar sessions when backend services are unavailable. All core learning features are functional offline.
+- **Notes:** See `AppStoreReviewNotes.md` for full reviewer walkthrough. Demo mode: no sign-in required; sample curriculum and collection load offline. Generation Studio is admin-only. Compact devices may show Account/Progress under the More tab.
 
 ## Age Rating
 - **Rating:** 4+ (No objectionable content)

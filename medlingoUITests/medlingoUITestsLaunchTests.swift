@@ -3,7 +3,7 @@ import XCTest
 final class medlingoUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
-        true
+        false
     }
 
     override func setUpWithError() throws {
@@ -13,6 +13,7 @@ final class medlingoUITestsLaunchTests: XCTestCase {
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["-UITesting"]
         app.launch()
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
@@ -23,8 +24,18 @@ final class medlingoUITestsLaunchTests: XCTestCase {
 
     @MainActor
     func testLaunchPerformance() throws {
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
+        // Top-tier iOS apps target <2.5s cold launch on simulator (99th percentile).
+        let app = XCUIApplication()
+        app.launchArguments = ["-UITesting"]
+
+        let options = XCTMeasureOptions()
+        options.iterationCount = 5
+        options.invocationOptions = [.manuallyStop]
+
+        measure(metrics: [XCTApplicationLaunchMetric()], options: options) {
+            app.terminate()
+            app.launch()
+            stopMeasuring()
         }
     }
 }

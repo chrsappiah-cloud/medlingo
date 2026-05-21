@@ -6,7 +6,53 @@ final class medlingoUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
+        app.launchArguments = ["-UITesting"]
         app.launch()
+    }
+
+    // MARK: - Tab Navigation Helpers
+
+    /// Taps a tab by name, opening the More menu when tabs overflow on compact devices.
+    @MainActor
+    private func tapTab(_ name: String, file: StaticString = #file, line: UInt = #line) {
+        let tabBar = app.tabBars.firstMatch
+        let directTab = tabBar.buttons[name]
+
+        if directTab.waitForExistence(timeout: 2), directTab.isHittable {
+            directTab.tap()
+            return
+        }
+
+        let more = tabBar.buttons["More"]
+        XCTAssertTrue(more.waitForExistence(timeout: 3), "Tab '\(name)' not found in tab bar or More", file: file, line: line)
+        more.tap()
+
+        let overflowButton = app.buttons[name]
+        if overflowButton.waitForExistence(timeout: 3) {
+            overflowButton.tap()
+            return
+        }
+
+        let overflowCell = app.cells.containing(NSPredicate(format: "label CONTAINS[c] %@", name)).firstMatch
+        XCTAssertTrue(overflowCell.waitForExistence(timeout: 3), "Tab '\(name)' not found in More menu", file: file, line: line)
+        overflowCell.tap()
+    }
+
+    @MainActor
+    private func tabIsReachable(_ name: String) -> Bool {
+        let tabBar = app.tabBars.firstMatch
+        if tabBar.buttons[name].exists { return true }
+        guard tabBar.buttons["More"].exists else { return false }
+
+        tabBar.buttons["More"].tap()
+        defer {
+            if tabBar.buttons["Learn"].exists {
+                tabBar.buttons["Learn"].tap()
+            }
+        }
+
+        return app.buttons[name].waitForExistence(timeout: 2)
+            || app.cells.containing(NSPredicate(format: "label CONTAINS[c] %@", name)).firstMatch.exists
     }
 
     // MARK: - Tab Bar Tests
@@ -20,40 +66,39 @@ final class medlingoUITests: XCTestCase {
     @MainActor
     func testAllTabsPresent() throws {
         let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.buttons["Learn"].exists)
-        XCTAssertTrue(tabBar.buttons["Practice"].exists)
-        XCTAssertTrue(tabBar.buttons["Sessions"].exists)
-        XCTAssertTrue(tabBar.buttons["Progress"].exists)
-        XCTAssertTrue(tabBar.buttons["Account"].exists)
+        for name in ["Learn", "Practice", "Collection", "Sessions"] {
+            XCTAssertTrue(tabBar.buttons[name].exists, "\(name) should appear in the tab bar")
+        }
+        XCTAssertTrue(tabIsReachable("Progress"))
+        XCTAssertTrue(tabIsReachable("Account"))
+        XCTAssertFalse(tabIsReachable("Studio"), "Studio tab should be hidden for learner role")
     }
 
     @MainActor
     func testTabNavigation() throws {
-        let tabBar = app.tabBars.firstMatch
-
-        tabBar.buttons["Practice"].tap()
+        tapTab("Practice")
         XCTAssertTrue(app.navigationBars["Practice Lab"].waitForExistence(timeout: 3))
 
-        tabBar.buttons["Sessions"].tap()
+        tapTab("Sessions")
         XCTAssertTrue(app.navigationBars["Sessions"].waitForExistence(timeout: 3))
 
-        tabBar.buttons["Progress"].tap()
+        tapTab("Progress")
         XCTAssertTrue(app.navigationBars["Progress"].waitForExistence(timeout: 3))
 
-        tabBar.buttons["Account"].tap()
+        tapTab("Account")
         XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 3))
 
-        tabBar.buttons["Learn"].tap()
-        XCTAssertTrue(app.navigationBars["Home"].waitForExistence(timeout: 3))
+        tapTab("Learn")
+        XCTAssertTrue(app.staticTexts["Medlingo"].waitForExistence(timeout: 3))
     }
 
     // MARK: - Home Screen Tests
 
     @MainActor
     func testHomeScreenContent() throws {
-        XCTAssertTrue(app.staticTexts["Welcome back!"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Medlingo"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Continue Learning"].exists)
-        XCTAssertTrue(app.staticTexts["Chapters"].exists)
+        XCTAssertTrue(app.staticTexts["Stages"].exists)
     }
 
     @MainActor
@@ -101,7 +146,7 @@ final class medlingoUITests: XCTestCase {
 
     @MainActor
     func testPracticeLabContent() throws {
-        app.tabBars.firstMatch.buttons["Practice"].tap()
+        tapTab("Practice")
         XCTAssertTrue(app.staticTexts["Daily Goal"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Practice Modes"].exists)
         XCTAssertTrue(app.staticTexts["Flashcards"].exists)
@@ -111,7 +156,7 @@ final class medlingoUITests: XCTestCase {
 
     @MainActor
     func testPracticeLabWeakAreas() throws {
-        app.tabBars.firstMatch.buttons["Practice"].tap()
+        tapTab("Practice")
         let weakAreas = app.staticTexts["Weak Areas"]
         XCTAssertTrue(weakAreas.waitForExistence(timeout: 3))
     }
@@ -120,14 +165,14 @@ final class medlingoUITests: XCTestCase {
 
     @MainActor
     func testSessionsScreenContent() throws {
-        app.tabBars.firstMatch.buttons["Sessions"].tap()
+        tapTab("Sessions")
         XCTAssertTrue(app.staticTexts["Next Session"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Available Tutors"].exists)
     }
 
     @MainActor
     func testTutorCardsVisible() throws {
-        app.tabBars.firstMatch.buttons["Sessions"].tap()
+        tapTab("Sessions")
         let tutorName = app.staticTexts["Dr. Sarah Mitchell"]
         XCTAssertTrue(tutorName.waitForExistence(timeout: 3))
     }
@@ -136,44 +181,53 @@ final class medlingoUITests: XCTestCase {
 
     @MainActor
     func testProgressDashboardContent() throws {
-        app.tabBars.firstMatch.buttons["Progress"].tap()
+        tapTab("Progress")
         XCTAssertTrue(app.staticTexts["XP Earned"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Chapters"].exists)
+        XCTAssertTrue(app.staticTexts["Stages"].exists)
         XCTAssertTrue(app.staticTexts["Mastery"].exists)
     }
 
     @MainActor
     func testProgressStreakSection() throws {
-        app.tabBars.firstMatch.buttons["Progress"].tap()
+        tapTab("Progress")
         let streak = app.staticTexts["7 Day Streak!"]
         XCTAssertTrue(streak.waitForExistence(timeout: 3))
     }
 
     @MainActor
     func testProgressChapterList() throws {
-        app.tabBars.firstMatch.buttons["Progress"].tap()
-        XCTAssertTrue(app.staticTexts["Chapter Progress"].waitForExistence(timeout: 3))
+        tapTab("Progress")
+        XCTAssertTrue(app.staticTexts["Stage Progress"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Word Parts & Foundations"].exists)
+    }
+
+    // MARK: - Collection Tab Tests
+
+    @MainActor
+    func testCollectionTabContent() throws {
+        tapTab("Collection")
+        XCTAssertTrue(app.navigationBars["Collection"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Artworks"].waitForExistence(timeout: 3))
     }
 
     // MARK: - Account Tab Tests
 
     @MainActor
     func testAccountScreenContent() throws {
-        app.tabBars.firstMatch.buttons["Account"].tap()
+        tapTab("Account")
         XCTAssertTrue(app.staticTexts["Christopher"].waitForExistence(timeout: 3))
     }
 
     @MainActor
     func testAccountSubscriptionLink() throws {
-        app.tabBars.firstMatch.buttons["Account"].tap()
+        tapTab("Account")
         let premiumPlan = app.staticTexts["Premium Plan"]
         XCTAssertTrue(premiumPlan.waitForExistence(timeout: 3))
     }
 
     @MainActor
     func testAccountSignOutButton() throws {
-        app.tabBars.firstMatch.buttons["Account"].tap()
+        tapTab("Account")
         let list = app.collectionViews.firstMatch
         list.swipeUp()
         let signOut = app.buttons["Sign Out"]
@@ -191,7 +245,7 @@ final class medlingoUITests: XCTestCase {
 
     @MainActor
     func testPracticeLabScrollable() throws {
-        app.tabBars.firstMatch.buttons["Practice"].tap()
+        tapTab("Practice")
         let scrollView = app.scrollViews.firstMatch
         XCTAssertTrue(scrollView.waitForExistence(timeout: 3))
         scrollView.swipeUp()
@@ -201,7 +255,7 @@ final class medlingoUITests: XCTestCase {
 
     @MainActor
     func testLabelingViewOpensFromPracticeLab() throws {
-        app.tabBars.firstMatch.buttons["Practice"].tap()
+        tapTab("Practice")
 
         let labelingText = app.staticTexts["Labeling"]
         XCTAssertTrue(labelingText.waitForExistence(timeout: 5))
@@ -218,7 +272,7 @@ final class medlingoUITests: XCTestCase {
 
     @MainActor
     func testLabelingViewShowsLabelsAndInteracts() throws {
-        app.tabBars.firstMatch.buttons["Practice"].tap()
+        tapTab("Practice")
 
         let labelingText = app.staticTexts["Labeling"]
         XCTAssertTrue(labelingText.waitForExistence(timeout: 5))

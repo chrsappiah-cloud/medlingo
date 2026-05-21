@@ -21,10 +21,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
-
-      - name: Show Xcode version
-        run: xcodebuild -version
+        run: |
+          if [ -d /Applications/Xcode_16.4.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          fi
+          xcodebuild -version
 
       - name: Build
         run: |
@@ -35,24 +36,31 @@ jobs:
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Prepare simulator
+        run: |
+          xcodebuild -downloadPlatform iOS 2>/dev/null || true
+          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone 16|CI iPhone|iPhone 17" | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' | head -1)
+          if [ -z "$SIM_ID" ]; then
+            RUNTIME=$(xcrun simctl list runtimes available -j | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((r['identifier'] for r in d['runtimes'] if r['isAvailable'] and 'iOS' in r['name']), ''))")
+            SIM_ID=$(xcrun simctl create "CI iPhone" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" "$RUNTIME" 2>/dev/null || true)
+          fi
+          if [ -z "$SIM_ID" ]; then
+            echo "::error::No iOS simulator available for unit tests"
+            exit 1
+          fi
+          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
+          xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+
       - name: Run Unit Tests
         run: |
-          xcodebuild -downloadPlatform iOS
-          SIM_ID=$(xcrun simctl list devices available | grep "iPhone" | grep -v "unavailable" | head -1 | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}')
-          if [ -z "$SIM_ID" ]; then
-            SIM_ID=$(xcrun simctl create "TestPhone" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" 2>/dev/null || echo "")
-          fi
-          if [ -n "$SIM_ID" ]; then
-            xcodebuild test \
-              -project medlingo.xcodeproj \
-              -scheme medlingo \
-              -destination "platform=iOS Simulator,id=$SIM_ID" \
-              -only-testing:medlingoTests \
-              CODE_SIGNING_ALLOWED=NO \
-              -resultBundlePath TestResults.xcresult
-          else
-            echo "::warning::No iOS simulator available — skipping unit tests"
-          fi
+          xcodebuild test \
+            -project medlingo.xcodeproj \
+            -scheme medlingo \
+            -destination "platform=iOS Simulator,id=$SIM_ID" \
+            -only-testing:medlingoTests \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath TestResults.xcresult
 
       - name: Upload Test Results
         if: always()
@@ -60,6 +68,53 @@ jobs:
         with:
           name: test-results
           path: TestResults.xcresult
+          if-no-files-found: ignore
+
+  ui-tests:
+    name: UI Tests
+    runs-on: macos-15
+    timeout-minutes: 60
+    needs: build-and-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          if [ -d /Applications/Xcode_16.4.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          fi
+          xcodebuild -version
+
+      - name: Prepare simulator
+        run: |
+          xcodebuild -downloadPlatform iOS 2>/dev/null || true
+          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone 16|CI iPhone|iPhone 17" | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' | head -1)
+          if [ -z "$SIM_ID" ]; then
+            RUNTIME=$(xcrun simctl list runtimes available -j | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((r['identifier'] for r in d['runtimes'] if r['isAvailable'] and 'iOS' in r['name']), ''))")
+            SIM_ID=$(xcrun simctl create "CI iPhone" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" "$RUNTIME")
+          fi
+          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
+          xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+
+      - name: Run UI Tests
+        run: |
+          xcodebuild test \
+            -project medlingo.xcodeproj \
+            -scheme medlingo \
+            -destination "platform=iOS Simulator,id=$SIM_ID" \
+            -only-testing:medlingoUITests \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath UITestResults.xcresult
+
+      - name: Upload UI Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: UITestResults.xcresult
           if-no-files-found: ignore
 
   code-quality:
@@ -72,7 +127,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+        run: |
+          if [ -d /Applications/Xcode_16.4.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          fi
 
       - name: Build and check warnings
         run: |
@@ -92,21 +150,24 @@ jobs:
             exit 1
           fi
 
-  # Gate: all checks must pass before merge
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [build-and-test, code-quality]
+    needs: [build-and-test, ui-tests, code-quality]
     if: always()
     steps:
       - name: Check CI results
         run: |
           if [ "${{ needs.build-and-test.result }}" != "success" ]; then
-            echo "::error::Build & Test failed"
+            echo "::error::Build & Unit Tests failed"
+            exit 1
+          fi
+          if [ "${{ needs.ui-tests.result }}" != "success" ]; then
+            echo "::error::UI Tests failed"
             exit 1
           fi
           if [ "${{ needs.code-quality.result }}" != "success" ]; then
             echo "::error::Code Quality check failed"
             exit 1
           fi
-          echo "All CI checks passed"
+          echo "All CI checks passed — ready for merge and distribution"

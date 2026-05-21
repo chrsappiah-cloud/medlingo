@@ -15,10 +15,38 @@ env:
   BUNDLE_ID: wcs.medlingo
 
 jobs:
+  production-preflight:
+    name: Production Preflight
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: |
+          if [ -d /Applications/Xcode_16.4.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          fi
+      - name: Release build
+        run: |
+          xcodebuild build \
+            -project medlingo.xcodeproj \
+            -scheme medlingo \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Verify App Store compliance
+        run: |
+          if grep -q com.apple.developer.icloud medlingo/medlingo.entitlements 2>/dev/null; then
+            echo "::error::CloudKit entitlement must not be present for App Store build"
+            exit 1
+          fi
+          echo "Preflight passed — ready for archive"
+
   deploy:
     name: Archive & Upload to TestFlight
     runs-on: macos-15
     timeout-minutes: 45
+    needs: production-preflight
     environment: production
 
     steps:

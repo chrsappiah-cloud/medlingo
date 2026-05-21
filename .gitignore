@@ -1,1 +1,9 @@
 build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.idea/
+*.iml
+.DS_Store
+Config.plist
+*.xcresult

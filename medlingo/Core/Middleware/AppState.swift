@@ -15,20 +15,40 @@ final class AppState {
     let cloudKitSync = CloudKitSyncService()
     let syncCoordinator = SyncCoordinator.shared
     let pronunciationService = PronunciationService.shared
+    let collectionStore = CollectionStore.shared
+    let inVideoAIService = InVideoAIService.shared
 
     // App-wide state
     var isOnboardingComplete = true
     var currentUserRole: AppUser.UserRole = .learner
+    var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains("-UITesting")
+    }
     var isPremium: Bool { !storeKitService.purchasedProductIDs.isEmpty }
     var currentUserID: UUID?
 
-    private init() {}
+    var isCreatorRole: Bool {
+        currentUserRole == .administrator || currentUserRole == .superAdmin
+    }
+
+    private init() {
+        if ProcessInfo.processInfo.arguments.contains("-UITesting") {
+            currentUserRole = .learner
+        }
+    }
 
     func bootstrap() async {
-        storeKitService.startListening()
-        try? await storeKitService.syncEntitlements()
-        try? await authService.refreshSession()
         analyticsService.track(.appOpened)
+
+        if isUITesting { return }
+
+        storeKitService.startListening()
+
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { try? await self.storeKitService.syncEntitlements() }
+            group.addTask { try? await self.authService.refreshSession() }
+            group.addTask { await self.collectionStore.loadCollection() }
+        }
     }
 
     func handlePurchase(productID: String) async throws -> PurchaseResult {
