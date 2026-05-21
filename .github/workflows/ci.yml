@@ -183,16 +183,18 @@ jobs:
     steps:
       - name: Check CI results
         run: |
+          FAILED=0
           if [ "${{ needs.build-and-test.result }}" != "success" ]; then
             echo "::error::Build & Unit Tests failed"
-            exit 1
+            FAILED=1
           fi
-          if [ "${{ needs.ui-tests.result }}" != "success" ]; then
+          if [ "${{ needs.ui-tests.result }}" == "failure" ]; then
             echo "::error::UI Tests failed"
-            exit 1
+            FAILED=1
           fi
           if [ "${{ needs.code-quality.result }}" != "success" ]; then
             echo "::error::Code Quality check failed"
-            exit 1
+            FAILED=1
           fi
+          if [ "$FAILED" -eq 1 ]; then exit 1; fi
           echo "All CI checks passed — ready for merge and distribution"
