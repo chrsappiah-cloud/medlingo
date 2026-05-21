@@ -21,19 +21,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          # Project targets iOS 26.4 — requires Xcode 26.x for simulator runtimes
-          if [ -d /Applications/Xcode_26.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-          elif [ -d /Applications/Xcode_26.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          fi
-          xcodebuild -version
+        run: bash scripts/select-xcode.sh
+
+      - name: Install platform dependencies
+        run: xcodebuild -downloadPlatform iOS
 
       - name: Build
         run: |
           xcodebuild build \
-            -project medlingo.xcodeproj \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
@@ -69,7 +65,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           xcodebuild test \
-            -project medlingo.xcodeproj \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination "platform=iOS Simulator,id=$SIM_ID" \
             -only-testing:medlingoTests \
@@ -96,14 +92,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          # Project targets iOS 26.4 — requires Xcode 26.x for simulator runtimes
-          if [ -d /Applications/Xcode_26.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-          elif [ -d /Applications/Xcode_26.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          fi
-          xcodebuild -version
+        run: bash scripts/select-xcode.sh
+
+      - name: Install platform dependencies
+        run: xcodebuild -downloadPlatform iOS
 
       - name: Prepare simulator
         run: |
@@ -135,7 +127,7 @@ jobs:
       - name: Run UI Tests
         run: |
           xcodebuild test \
-            -project medlingo.xcodeproj \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination "platform=iOS Simulator,id=$SIM_ID" \
             -only-testing:medlingoUITests \
@@ -161,18 +153,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          if [ -d /Applications/Xcode_26.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-          elif [ -d /Applications/Xcode_26.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          fi
-          xcodebuild -version
+        run: bash scripts/select-xcode.sh
+
+      - name: Install platform dependencies
+        run: xcodebuild -downloadPlatform iOS
 
       - name: Build and check warnings
         run: |
           xcodebuild build \
-            -project medlingo.xcodeproj \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \

@@ -1,5 +1,24 @@
 # Medlingo Distribution Guide
 
+## Local build (this Mac)
+
+Project path: `/Applications/medlingo/medlingo.xcodeproj`
+
+```bash
+cd /Applications/medlingo
+xcodebuild -downloadPlatform iOS          # platform dependencies
+bash scripts/distribute.sh                # archive + IPA (build/export/medlingo.ipa)
+ASC_ISSUER_ID=your-issuer bash scripts/upload-testflight.sh   # optional upload
+```
+
+Upload the IPA via **Transporter** (Mac App Store), **Xcode Organizer** (`open build/medlingo.xcarchive`), or:
+
+```bash
+xcrun altool --upload-app -f build/export/medlingo.ipa -t ios \
+  --apiKey YOUR_KEY_ID --apiIssuer YOUR_ISSUER_ID \
+  --private-key ~/.appstoreconnect/private_keys/AuthKey_YOUR_KEY_ID.p8
+```
+
 ## GitHub → TestFlight (automated)
 
 1. Merge PR to `main` (requires **CI Gate** green).
@@ -38,5 +57,3 @@ Copy from **`AppStoreReviewNotes.md`**:
 ## Reviewer demo path (no login)
 
 Learn → Resume → Practice → Collection → Sessions → Progress → Account (More tab on small phones).
-
-EOF
