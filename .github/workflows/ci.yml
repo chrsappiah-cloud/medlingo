@@ -21,19 +21,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          # Project targets iOS 26.4 — requires Xcode 26.x for simulator runtimes
-          if [ -d /Applications/Xcode_26.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-          elif [ -d /Applications/Xcode_26.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          fi
-          xcodebuild -version
+        run: bash scripts/select-xcode.sh
 
       - name: Build
         run: |
           xcodebuild build \
-            -project medlingo.xcodeproj \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
@@ -41,7 +34,7 @@ jobs:
 
       - name: Prepare simulator
         run: |
-          xcodebuild -downloadPlatform iOS
+          xcodebuild -downloadPlatform iOS || true
           RUNTIME_ID=""
           for attempt in 1 2 3 4 5; do
             RUNTIME_ID=$(xcrun simctl list runtimes available -j | python3 -c "
@@ -69,7 +62,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           xcodebuild test \
-            -project medlingo.xcodeproj \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination "platform=iOS Simulator,id=$SIM_ID" \
             -only-testing:medlingoTests \
@@ -96,18 +89,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          # Project targets iOS 26.4 — requires Xcode 26.x for simulator runtimes
-          if [ -d /Applications/Xcode_26.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-          elif [ -d /Applications/Xcode_26.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          fi
-          xcodebuild -version
+        run: bash scripts/select-xcode.sh
 
       - name: Prepare simulator
         run: |
-          xcodebuild -downloadPlatform iOS
+          xcodebuild -downloadPlatform iOS || true
           RUNTIME_ID=""
           for attempt in 1 2 3 4 5; do
             RUNTIME_ID=$(xcrun simctl list runtimes available -j | python3 -c "
@@ -135,7 +121,7 @@ jobs:
       - name: Run UI Tests
         run: |
           xcodebuild test \
-            -project medlingo.xcodeproj \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination "platform=iOS Simulator,id=$SIM_ID" \
             -only-testing:medlingoUITests \
@@ -161,18 +147,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          if [ -d /Applications/Xcode_26.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-          elif [ -d /Applications/Xcode_26.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          fi
-          xcodebuild -version
+        run: bash scripts/select-xcode.sh
 
       - name: Build and check warnings
         run: |
           xcodebuild build \
-            -project medlingo.xcodeproj \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \

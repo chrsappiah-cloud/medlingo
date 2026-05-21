@@ -11,7 +11,8 @@ concurrency:
 
 env:
   SCHEME: medlingo
-  PROJECT: medlingo.xcodeproj
+  REPO_ROOT: ${{ github.workspace }}
+  PROJECT: ${{ github.workspace }}/medlingo.xcodeproj
   BUNDLE_ID: wcs.medlingo
 
 jobs:
@@ -22,17 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Select Xcode
-        run: |
-          if [ -d /Applications/Xcode_26.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-          elif [ -d /Applications/Xcode_26.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          fi
-          xcodebuild -version
+        run: bash scripts/select-xcode.sh
       - name: Release build
         run: |
           xcodebuild build \
-            -project medlingo.xcodeproj \
+            -project "$PROJECT" \
             -scheme medlingo \
             -destination 'generic/platform=iOS' \
             -configuration Release \
@@ -57,13 +52,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          if [ -d /Applications/Xcode_26.3.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
-          elif [ -d /Applications/Xcode_26.2.app ]; then
-            sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
-          fi
-          xcodebuild -version
+        run: bash scripts/select-xcode.sh
 
       - name: Install Apple certificate and provisioning profile
         env:
@@ -93,20 +82,20 @@ jobs:
       - name: Increment build number
         run: |
           BUILD_NUMBER=$(date +%Y%m%d%H%M)
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" medlingo/Info.plist
           echo "Build number: $BUILD_NUMBER"
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
 
       - name: Archive
         run: |
           xcodebuild archive \
-            -project $PROJECT \
+            -project "$PROJECT" \
             -scheme $SCHEME \
             -configuration Release \
             -archivePath $RUNNER_TEMP/medlingo.xcarchive \
             -destination 'generic/platform=iOS' \
             -allowProvisioningUpdates \
             DEVELOPMENT_TEAM=${{ secrets.TEAM_ID }} \
+            CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}"
 
