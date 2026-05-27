@@ -34,7 +34,7 @@ xcrun altool --upload-app -f build/export/medlingo.ipa -t ios \
 | Field | Value |
 |-------|--------|
 | Version | 1.0 |
-| Build | 202605271200 (local) / auto-incremented in CD |
+| Build | 202605271300 (local) / auto-incremented in CD |
 | Bundle ID | `wcs.medlingo` |
 | Category | Education / Medical |
 | Age | 4+ |
