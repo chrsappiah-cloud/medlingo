@@ -109,7 +109,7 @@ Copy these into **App Store Connect → Resolution Center** when replying to rev
 
 ### If asked about Upgrade button / purchase flow not responding
 
-> This issue has been fixed in build 202605271200. The Upgrade button now properly shows a loading indicator, initiates the StoreKit purchase sheet, and displays an error alert if the purchase cannot be completed (e.g., products not configured in Sandbox). Previous versions silently swallowed errors due to missing error propagation in the async purchase chain.
+> This issue has been fixed in build 202605271300. The Upgrade button now properly shows a loading indicator, initiates the StoreKit purchase sheet, and displays an error alert if the purchase cannot be completed (e.g., products not configured in Sandbox). Previous versions silently swallowed errors due to missing error propagation in the async purchase chain.
 
 ### If asked about login / demo access (Guideline 2.1)
 

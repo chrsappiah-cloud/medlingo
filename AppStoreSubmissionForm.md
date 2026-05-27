@@ -1,7 +1,7 @@
 # Medlingo — App Store Connect Submission Form
 
 **Status:** Ready for resubmission  
-**Version:** 1.0 (Build 202605271200)  
+**Version:** 1.0 (Build 202605271300)  
 **Bundle ID:** `wcs.medlingo`  
 **Last updated:** 2026-05-27
 
@@ -135,7 +135,7 @@ Not required for initial submission. Add later if you produce a 15–30s screen 
 ### Notes (paste full block)
 
 ```
-RESUBMISSION NOTES — Guideline 2.1(a) fix applied in build 202605271200:
+RESUBMISSION NOTES — Guideline 2.1(a) fix applied in build 202605271300:
 The Upgrade button on the Subscription page now properly responds with a loading
 indicator, initiates the StoreKit purchase sheet, and displays error alerts if
 the purchase cannot be completed. All errors in the async purchase chain are
@@ -236,7 +236,7 @@ Ensure each product is **Ready to Submit** with localized display name and descr
 | Field | Value |
 |-------|-------|
 | Version | 1.0 |
-| Build | 202605271200 (from distribution pipeline) |
+| Build | 202605271300 (uploaded to App Store Connect) |
 | Copyright | © 2026 Christopher Appiah-Thompson |
 
 ---
