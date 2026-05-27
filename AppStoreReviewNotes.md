@@ -71,12 +71,13 @@ Learn word roots, anatomy, and clinical vocabulary through structured stages, pr
 
 ---
 
-## What’s New (Version 1.0)
+## What’s New (Version 1.0 — Resubmission)
 
 - **Collection Gallery** — Browse and favorite AI-generated educational artwork and videos.
 - **Generation Studio** (Creator) — Administrators can generate medical visuals with guided prompts and style presets.
 - **Performance** — Parallel bootstrap, UI-test launch path, and 99th-percentile performance test gates.
 - **Reliability** — Full CI/CD with mandatory unit, UI, and quality gates before TestFlight.
+- **Purchase Flow Fix** — Upgrade button now properly displays loading state, initiates StoreKit, and shows error alerts on failure. All errors in the purchase chain are now surfaced to the user.
 
 ---
 
@@ -87,6 +88,8 @@ medical terminology, nursing, anatomy, medical student, NCLEX, healthcare, flash
 ---
 
 ## Review Response Templates
+
+Copy these into **App Store Connect → Resolution Center** when replying to review feedback.
 
 ### If asked about AI generation
 
@@ -103,6 +106,50 @@ medical terminology, nursing, anatomy, medical student, NCLEX, healthcare, flash
 ### If asked about subscriptions
 
 > Premium unlocks all stages, practice modes, and tutor messaging. Users can restore purchases via Account → Restore Purchases (StoreKit). Sandbox testing instructions are documented in App Review Notes above.
+
+### If asked about Upgrade button / purchase flow not responding
+
+> This issue has been fixed in build 202605271200. The Upgrade button now properly shows a loading indicator, initiates the StoreKit purchase sheet, and displays an error alert if the purchase cannot be completed (e.g., products not configured in Sandbox). Previous versions silently swallowed errors due to missing error propagation in the async purchase chain.
+
+### If asked about login / demo access (Guideline 2.1)
+
+> No demo account is required. On first launch, the Learn tab loads sample curriculum immediately. Reviewers can tap Resume, open Practice Lab, Collection, Sessions, and Progress without signing in. Account features (subscription management) are reachable from the Account tab or More menu on compact devices.
+
+### If asked about payment mechanism for tutor sessions (Guideline 2.1 — Information Needed)
+
+> Payment for tutor sessions will be handled through Apple's StoreKit 2 In-App Purchase system. We have defined two consumable products: `com.medlingo.sessions.5pack` (5 Session Pack) and `com.medlingo.sessions.10pack` (10 Session Pack). Users purchase a session pack via StoreKit, and the entitlement is verified server-side through our Supabase backend. No third-party payment processors are used. This integration is currently in development and will be activated in a subsequent update. Premium subscription also includes complimentary tutor sessions as a benefit.
+
+### If asked about one-to-one vs one-to-many session format (Guideline 2.1 — Information Needed)
+
+> The app supports both formats. One-to-one (private) sessions have `seatsAvailable: 1` and use Daily video technology for a private tutor-learner video call. One-to-many (group) sessions support multiple learners (8–10 seats) and are instructor-led group video calls. The format is determined per session by the tutor or administrator. All sessions are carried via video call using Daily's video API.
+
+### If asked about incomplete features or placeholder content (Guideline 2.1)
+
+> All learner-facing tabs show fully interactive demo content: structured stages, practice modes, collection artworks, tutor cards, and progress analytics. Generation Studio is intentionally limited to administrator roles and is not shown in the default learner tab bar. Video session rooms can be verified via Sessions UI without a live call.
+
+### If asked about Guideline 4.3 (spam / duplicate apps)
+
+> Medlingo is a focused medical terminology learning product with a distinctive Practice Lab (labeling, word builder, spaced repetition), Collection gallery, and tutor session discovery. It is not a template or repackaged app; it is the sole Medlingo offering on the App Store.
+
+### If asked about Guideline 5.1.1 (privacy / account deletion)
+
+> Sign-in is optional. Users who create an account can sign out from Account. Account deletion requests can be sent to christopher.appiahthompson@myworldclass.org; we process deletion within 30 days per our privacy policy at https://wcs-full.vercel.app/privacy.
+
+### If asked about push notifications (Guideline 4.5.4)
+
+> Push is used only for study reminders and session-related updates. Permission is requested when the user enables reminders, not at launch. Users can disable notifications in iOS Settings.
+
+### If asked about export compliance / encryption
+
+> The app uses only Apple’s standard HTTPS APIs (URLSession) for network calls. No proprietary encryption is implemented. We have answered export compliance accordingly (standard encryption only, exempt).
+
+### If asked to provide updated screenshots or metadata
+
+> We have uploaded six 6.7" screenshots showing Learn, Practice Lab, Anatomy Labeling, Collection, Sessions, and Progress. Files are generated from the production UI via `scripts/capture-distribution-screenshots.sh` and documented in `distribution/README.md`.
+
+### If rejection cites missing In-App Purchase information
+
+> Subscription products (Premium Monthly/Yearly) unlock all stages and practice modes. Consumable session packs and chapter unlock are documented in App Review Notes. All products use StoreKit 2 with on-device verification. Sandbox Apple ID testing is supported; Restore Purchases is available under Account.
 
 ---
 

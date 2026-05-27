@@ -387,10 +387,23 @@ struct FAQRow: View {
 struct SubscriptionView: View {
     @Environment(AppState.self) private var appState
     @State private var isLoadingProducts = false
+    @State private var isPurchasing = false
+    @State private var purchaseError: String?
+    @State private var showErrorAlert = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: AppSpacing.lg) {
+                if isLoadingProducts {
+                    VStack(spacing: AppSpacing.sm) {
+                        ProgressView()
+                            .tint(AppColor.gold)
+                        Text("Loading plans...")
+                            .font(AppTypography.subheadline)
+                            .foregroundColor(AppColor.textSecondary)
+                    }
+                    .padding(.top, AppSpacing.xl)
+                }
                 currentPlanCard
                 availablePlansSection
                 copyrightFooter
@@ -400,10 +413,50 @@ struct SubscriptionView: View {
         .background(AppColor.background)
         .navigationTitle("Subscription")
         .preferredColorScheme(.dark)
+        .alert("Purchase Error", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(purchaseError ?? "An unknown error occurred. Please try again.")
+        }
         .task {
-            isLoadingProducts = true
-            _ = try? await appState.storeKitService.loadProducts()
-            isLoadingProducts = false
+            await loadProducts()
+        }
+    }
+
+    private func loadProducts() async {
+        isLoadingProducts = true
+        defer { isLoadingProducts = false }
+        do {
+            let products = try await appState.storeKitService.loadProducts()
+            if products.isEmpty {
+                purchaseError = "No subscription products are available at this time."
+            }
+        } catch {
+            purchaseError = "Failed to load subscription plans: \(error.localizedDescription)"
+        }
+    }
+
+    private func purchaseProduct(_ productID: String) async {
+        guard !isPurchasing else { return }
+        isPurchasing = true
+        defer { isPurchasing = false }
+        do {
+            let result = try await appState.handlePurchase(productID: productID)
+            switch result {
+            case .success:
+                purchaseError = nil
+            case .pending:
+                purchaseError = "Purchase is pending. It will complete once processed."
+                showErrorAlert = true
+            case .cancelled:
+                purchaseError = nil
+            case .failed(let error):
+                purchaseError = error.localizedDescription
+                showErrorAlert = true
+            }
+        } catch {
+            purchaseError = error.localizedDescription
+            showErrorAlert = true
         }
     }
 
@@ -436,7 +489,8 @@ struct SubscriptionView: View {
                 price: "$9.99/mo",
                 features: ["Full stage library", "All practice modes", "Progress analytics", "Tutor messaging"],
                 isCurrentPlan: true,
-                onUpgrade: {}
+                onUpgrade: {},
+                isLoading: false
             )
             PlanCard(
                 name: "Yearly",
@@ -444,8 +498,9 @@ struct SubscriptionView: View {
                 features: ["Everything in Monthly", "Save 33%", "5 free tutor sessions", "Priority support"],
                 isCurrentPlan: false,
                 onUpgrade: {
-                    Task { _ = try? await appState.handlePurchase(productID: "com.medlingo.premium.yearly") }
-                }
+                    Task { await purchaseProduct("com.medlingo.premium.yearly") }
+                },
+                isLoading: isPurchasing
             )
         }
     }
@@ -464,6 +519,7 @@ struct PlanCard: View {
     let features: [String]
     let isCurrentPlan: Bool
     let onUpgrade: () -> Void
+    let isLoading: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
@@ -495,7 +551,7 @@ struct PlanCard: View {
                     .background(AppColor.gold.opacity(0.15))
                     .clipShape(Capsule())
             } else {
-                PrimaryButton(title: "Upgrade", action: onUpgrade)
+                PrimaryButton(title: "Upgrade", action: onUpgrade, isLoading: isLoading)
             }
         }
         .padding(AppSpacing.md)
