@@ -1,4 +1,6 @@
-name: CI - Build & Test
+name: CI - Build & Test (ARC Shield)
+
+# Lanes: PR = unit + smoke UI | Main = unit + integration + UI | Release = ci-release.yml
 
 on:
   push:
@@ -82,6 +84,46 @@ jobs:
         env:
           ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
+  integration-tests:
+    name: Integration Tests (Main)
+    runs-on: macos-15
+    timeout-minutes: 30
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
+      - name: Select Xcode
+        run: bash scripts/select-xcode.sh
+
+      - name: Prepare simulator
+        run: |
+          RUNTIME_ID=$(xcrun simctl list runtimes available -j | python3 -c "
+          import json, sys
+          ios = [r for r in json.load(sys.stdin).get('runtimes', [])
+                 if r.get('isAvailable') and 'iOS' in r.get('name', '')]
+          ios.sort(key=lambda r: r['name'], reverse=True)
+          print(ios[0]['identifier'] if ios else '')
+          ")
+          SIM_ID=$(xcrun simctl create "CI Integration" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" "$RUNTIME_ID")
+          xcrun simctl boot "$SIM_ID"
+          xcrun simctl bootstatus "$SIM_ID" -b
+          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
+
+      - name: Run Integration Tests
+        run: |
+          xcodebuild test \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
+            -scheme medlingo \
+            -destination "platform=iOS Simulator,id=$SIM_ID" \
+            -only-testing:medlingoIntegrationTests \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO
+
   ui-tests:
     name: UI Tests
     runs-on: macos-15
@@ -126,11 +168,15 @@ jobs:
 
       - name: Run UI Tests
         run: |
+          TEST_FILTER="-only-testing:medlingoUITests"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TEST_FILTER="-only-testing:medlingoUITests/SmokeTests"
+          fi
           xcodebuild test \
             -project "${{ github.workspace }}/medlingo.xcodeproj" \
             -scheme medlingo \
             -destination "platform=iOS Simulator,id=$SIM_ID" \
-            -only-testing:medlingoUITests \
+            $TEST_FILTER \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath UITestResults.xcresult

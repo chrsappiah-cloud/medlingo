@@ -29,6 +29,7 @@ struct medlingoApp: App {
                 .environment(dataMiddleware)
                 .environment(router)
                 .task {
+                    RuntimeLogger.log(.lifecycle, "app launch")
                     await appState.bootstrap()
                 }
         }

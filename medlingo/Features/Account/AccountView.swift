@@ -163,6 +163,7 @@ struct AccountView: View {
                 Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                     .foregroundColor(AppColor.error)
             }
+            .accessibilityIdentifier("sign-out-button")
             Button {
                 showDeleteAlert = true
             } label: {
@@ -404,6 +405,14 @@ struct SubscriptionView: View {
                     }
                     .padding(.top, AppSpacing.xl)
                 }
+                if let purchaseError, !purchaseError.isEmpty, !isLoadingProducts {
+                    Text(purchaseError)
+                        .font(AppTypography.subheadline)
+                        .foregroundColor(AppColor.error)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, AppSpacing.md)
+                        .accessibilityIdentifier("subscription-load-error")
+                }
                 currentPlanCard
                 availablePlansSection
                 copyrightFooter
@@ -421,9 +430,18 @@ struct SubscriptionView: View {
         .task {
             await loadProducts()
         }
+        .onAppear {
+            RuntimeLogger.breadcrumb("subscription")
+        }
     }
 
     private func loadProducts() async {
+        if AppLaunchConfiguration.shared.storeKitScenario == .productsFailure {
+            purchaseError = "No subscription products are available at this time."
+            showErrorAlert = true
+            return
+        }
+
         isLoadingProducts = true
         defer { isLoadingProducts = false }
         do {

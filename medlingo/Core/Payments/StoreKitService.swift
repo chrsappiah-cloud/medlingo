@@ -22,7 +22,12 @@ final class StoreKitService: PurchaseServiceProtocol {
     private(set) var purchasedProductIDs: Set<String> = []
     private(set) var isLoading = false
 
+    var launchConfiguration: AppLaunchConfiguration = .shared
     private var transactionListener: Task<Void, Error>?
+
+    init(launchConfiguration: AppLaunchConfiguration = .shared) {
+        self.launchConfiguration = launchConfiguration
+    }
 
     static let productIdentifiers: Set<String> = [
         "com.medlingo.premium.monthly",
@@ -54,8 +59,21 @@ final class StoreKitService: PurchaseServiceProtocol {
     func loadProducts() async throws -> [Product] {
         isLoading = true
         defer { isLoading = false }
+
+        if let scenario = launchConfiguration.storeKitScenario {
+            RuntimeLogger.log(.purchase, "loadProducts mock scenario=\(scenario.rawValue)")
+            switch scenario {
+            case .productsFailure, .offline:
+                throw StoreError.purchaseFailed
+            case .productsSuccess, .purchaseCancelled, .purchaseSuccess, .purchasePending, .restoreSuccess, .restoreEmpty:
+                availableProducts = []
+                return []
+            }
+        }
+
         let products = try await Product.products(for: Self.productIdentifiers)
         availableProducts = products.sorted { $0.price < $1.price }
+        RuntimeLogger.log(.purchase, "loadProducts count=\(products.count)")
         return availableProducts
     }
 
@@ -90,8 +108,24 @@ final class StoreKitService: PurchaseServiceProtocol {
     }
 
     func restorePurchases() async throws {
+        if let scenario = launchConfiguration.storeKitScenario {
+            RuntimeLogger.log(.purchase, "restorePurchases mock scenario=\(scenario.rawValue)")
+            switch scenario {
+            case .restoreEmpty:
+                purchasedProductIDs = []
+                return
+            case .restoreSuccess, .purchaseSuccess:
+                purchasedProductIDs = ["com.medlingo.premium.yearly"]
+                return
+            case .productsFailure, .offline:
+                throw StoreError.purchaseFailed
+            default:
+                return
+            }
+        }
         try await AppStore.sync()
         await updatePurchasedProducts()
+        RuntimeLogger.log(.purchase, "restorePurchases complete count=\(purchasedProductIDs.count)")
     }
 
     private func updatePurchasedProducts() async {

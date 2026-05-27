@@ -22,11 +22,19 @@ final class AuthService: AuthServiceProtocol {
     private var accessToken: String?
     private var refreshToken: String?
     private let client: NetworkClientProtocol
+    private let sessionStore: SessionStoreProtocol
 
     var token: String? { accessToken }
 
-    init(client: NetworkClientProtocol? = nil) {
+    init(
+        client: NetworkClientProtocol? = nil,
+        sessionStore: SessionStoreProtocol = UserDefaultsSessionStore()
+    ) {
         self.client = client ?? SupabaseManager.shared.networkClient
+        self.sessionStore = sessionStore
+        self.accessToken = sessionStore.loadAccessToken()
+        self.refreshToken = sessionStore.loadRefreshToken()
+        self.isAuthenticated = accessToken != nil
     }
 
     func signInWithApple(credential: ASAuthorizationAppleIDCredential) async throws {
@@ -99,7 +107,9 @@ final class AuthService: AuthServiceProtocol {
         accessToken = nil
         refreshToken = nil
         isAuthenticated = false
+        sessionStore.clear()
         SupabaseManager.shared.clearAuthToken()
+        RuntimeLogger.log(.auth, "signed out")
     }
 
     func refreshSession() async throws {
@@ -131,7 +141,15 @@ final class AuthService: AuthServiceProtocol {
         accessToken = nil
         refreshToken = nil
         isAuthenticated = false
+        sessionStore.clear()
         SupabaseManager.shared.clearAuthToken()
+        RuntimeLogger.log(.auth, "account deleted")
+    }
+
+    /// Seeds an expired refresh token for ARC Shield recovery UI tests (`-seedExpiredToken`).
+    func seedExpiredSessionForTesting() {
+        sessionStore.saveRefreshToken("arc-expired-test-token")
+        sessionStore.saveAccessToken("arc-expired-access-token")
     }
 
     private func applySession(_ session: AuthSession) {
@@ -139,7 +157,10 @@ final class AuthService: AuthServiceProtocol {
         refreshToken = session.refreshToken
         currentUser = session.user
         isAuthenticated = true
+        sessionStore.saveAccessToken(session.accessToken)
+        sessionStore.saveRefreshToken(session.refreshToken)
         SupabaseManager.shared.setAuthToken(session.accessToken)
+        RuntimeLogger.log(.auth, "session applied user=\(session.user.id)")
     }
 }
 

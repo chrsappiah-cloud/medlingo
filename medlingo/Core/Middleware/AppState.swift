@@ -7,8 +7,12 @@ import StoreKit
 final class AppState {
     static let shared = AppState()
 
+    let launchConfiguration = AppLaunchConfiguration.shared
+    let permissionProvider: PermissionProviderProtocol
+    private let bootstrapper: AppBootstrapperProtocol
+
     // Services
-    let authService = AuthService()
+    let authService: AuthService
     let storeKitService = StoreKitService()
     let analyticsService = AnalyticsService.shared
     let chapterService = ChapterService()
@@ -21,9 +25,7 @@ final class AppState {
     // App-wide state
     var isOnboardingComplete = true
     var currentUserRole: AppUser.UserRole = .learner
-    var isUITesting: Bool {
-        ProcessInfo.processInfo.arguments.contains("-UITesting")
-    }
+    var isUITesting: Bool { launchConfiguration.isUITestMode }
     var isPremium: Bool { !storeKitService.purchasedProductIDs.isEmpty }
     var currentUserID: UUID?
 
@@ -31,24 +33,35 @@ final class AppState {
         currentUserRole == .administrator || currentUserRole == .superAdmin
     }
 
-    private init() {
-        if ProcessInfo.processInfo.arguments.contains("-UITesting") {
+    init(
+        authService: AuthService? = nil,
+        bootstrapper: AppBootstrapperProtocol? = nil,
+        permissionProvider: PermissionProviderProtocol? = nil,
+        sessionStore: SessionStoreProtocol? = nil
+    ) {
+        let configuration = AppLaunchConfiguration.shared
+        self.bootstrapper = bootstrapper ?? LiveAppBootstrapper()
+        self.permissionProvider = permissionProvider
+            ?? FakePermissionProvider(scenario: configuration.permissionScenario)
+        self.authService = authService ?? AuthService(sessionStore: sessionStore ?? UserDefaultsSessionStore())
+
+        if configuration.isUITestMode {
             currentUserRole = .learner
+            isOnboardingComplete = true
+        }
+        if configuration.seedsExpiredToken {
+            self.authService.seedExpiredSessionForTesting()
         }
     }
 
     func bootstrap() async {
-        analyticsService.track(.appOpened)
-
-        if isUITesting { return }
-
-        storeKitService.startListening()
-
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { try? await self.storeKitService.syncEntitlements() }
-            group.addTask { try? await self.authService.refreshSession() }
-            group.addTask { await self.collectionStore.loadCollection() }
-        }
+        await bootstrapper.bootstrap(
+            authService: authService,
+            storeKitService: storeKitService,
+            collectionStore: collectionStore,
+            analyticsService: analyticsService,
+            configuration: launchConfiguration
+        )
     }
 
     func handlePurchase(productID: String) async throws -> PurchaseResult {

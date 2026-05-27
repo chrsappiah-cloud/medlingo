@@ -21,12 +21,20 @@
 			remoteGlobalIDString = 5ED1588B2FAB336E00288FBE;
 			remoteInfo = medlingo;
 		};
+		A1B2C3D82FAB338100288FBE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5ED158842FAB336E00288FBE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5ED1588B2FAB336E00288FBE;
+			remoteInfo = medlingo;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		5ED1588C2FAB336E00288FBE /* medlingo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = medlingo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5ED1589D2FAB337200288FBE /* medlingoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = medlingoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5ED158A72FAB337200288FBE /* medlingoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = medlingoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D12FAB338100288FBE /* medlingoIntegrationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = medlingoIntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -58,6 +66,11 @@
 			path = medlingoUITests;
 			sourceTree = "<group>";
 		};
+		A1B2C3D22FAB338100288FBE /* medlingoIntegrationTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = medlingoIntegrationTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +95,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1B2C3D52FAB338100288FBE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -91,6 +111,7 @@
 				5ED1588E2FAB336E00288FBE /* medlingo */,
 				5ED158A02FAB337200288FBE /* medlingoTests */,
 				5ED158AA2FAB337200288FBE /* medlingoUITests */,
+				A1B2C3D22FAB338100288FBE /* medlingoIntegrationTests */,
 				5ED1588D2FAB336E00288FBE /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,6 +122,7 @@
 				5ED1588C2FAB336E00288FBE /* medlingo.app */,
 				5ED1589D2FAB337200288FBE /* medlingoTests.xctest */,
 				5ED158A72FAB337200288FBE /* medlingoUITests.xctest */,
+				A1B2C3D12FAB338100288FBE /* medlingoIntegrationTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -176,6 +198,29 @@
 			productReference = 5ED158A72FAB337200288FBE /* medlingoUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A1B2C3D32FAB338100288FBE /* medlingoIntegrationTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1B2C3D92FAB338100288FBE /* Build configuration list for PBXNativeTarget "medlingoIntegrationTests" */;
+			buildPhases = (
+				A1B2C3D42FAB338100288FBE /* Sources */,
+				A1B2C3D52FAB338100288FBE /* Frameworks */,
+				A1B2C3D62FAB338100288FBE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1B2C3D72FAB338100288FBE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A1B2C3D22FAB338100288FBE /* medlingoIntegrationTests */,
+			);
+			name = medlingoIntegrationTests;
+			packageProductDependencies = (
+			);
+			productName = medlingoIntegrationTests;
+			productReference = A1B2C3D12FAB338100288FBE /* medlingoIntegrationTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -198,6 +243,10 @@
 						CreatedOnToolsVersion = 26.4.1;
 						TestTargetID = 5ED1588B2FAB336E00288FBE;
 					};
+					A1B2C3D32FAB338100288FBE = {
+						CreatedOnToolsVersion = 26.4.1;
+						TestTargetID = 5ED1588B2FAB336E00288FBE;
+					};
 				};
 			};
 			buildConfigurationList = 5ED158872FAB336E00288FBE /* Build configuration list for PBXProject "medlingo" */;
@@ -217,6 +266,7 @@
 				5ED1588B2FAB336E00288FBE /* medlingo */,
 				5ED1589C2FAB337200288FBE /* medlingoTests */,
 				5ED158A62FAB337200288FBE /* medlingoUITests */,
+				A1B2C3D32FAB338100288FBE /* medlingoIntegrationTests */,
 			);
 		};
 /* End PBXProject section */
@@ -237,6 +287,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		5ED158A52FAB337200288FBE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D62FAB338100288FBE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -267,6 +324,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1B2C3D42FAB338100288FBE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -279,6 +343,11 @@
 			isa = PBXTargetDependency;
 			target = 5ED1588B2FAB336E00288FBE /* medlingo */;
 			targetProxy = 5ED158A82FAB337200288FBE /* PBXContainerItemProxy */;
+		};
+		A1B2C3D72FAB338100288FBE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5ED1588B2FAB336E00288FBE /* medlingo */;
+			targetProxy = A1B2C3D82FAB338100288FBE /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -570,6 +639,50 @@
 			};
 			name = Release;
 		};
+		A1B2C3DA2FAB338100288FBE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = TM2WG7HH96;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = wcs.medlingoIntegrationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/medlingo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/medlingo";
+			};
+			name = Debug;
+		};
+		A1B2C3DB2FAB338100288FBE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = TM2WG7HH96;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = wcs.medlingoIntegrationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/medlingo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/medlingo";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -605,6 +718,15 @@
 			buildConfigurations = (
 				5ED158B92FAB337200288FBE /* Debug */,
 				5ED158BA2FAB337200288FBE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1B2C3D92FAB338100288FBE /* Build configuration list for PBXNativeTarget "medlingoIntegrationTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3DA2FAB338100288FBE /* Debug */,
+				A1B2C3DB2FAB338100288FBE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
