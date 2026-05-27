@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
       - name: Select Xcode
         run: bash scripts/select-xcode.sh
@@ -77,6 +79,8 @@ jobs:
           name: test-results
           path: TestResults.xcresult
           if-no-files-found: ignore
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
   ui-tests:
     name: UI Tests
@@ -87,6 +91,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
       - name: Select Xcode
         run: bash scripts/select-xcode.sh
@@ -136,6 +142,8 @@ jobs:
           name: ui-test-results
           path: UITestResults.xcresult
           if-no-files-found: ignore
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
   code-quality:
     name: Code Quality
@@ -145,6 +153,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
       - name: Select Xcode
         run: bash scripts/select-xcode.sh
