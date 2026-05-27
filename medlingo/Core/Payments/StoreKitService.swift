@@ -71,7 +71,7 @@ final class StoreKitService: PurchaseServiceProtocol {
             await updatePurchasedProducts()
             await transaction.finish()
             // Forward signed transaction to backend for server-side reconciliation
-            try await verifyOnServer(transaction: transaction)
+            await verifyOnServer(transaction: transaction)
             return .success(transactionID: String(transaction.id))
 
         case .pending:
@@ -113,23 +113,29 @@ final class StoreKitService: PurchaseServiceProtocol {
         }
     }
 
-    private func verifyOnServer(transaction: Transaction) async throws {
+    private func verifyOnServer(transaction: Transaction) async {
         let signedData = String(data: transaction.jsonRepresentation, encoding: .utf8) ?? ""
-        guard !signedData.isEmpty else { throw StoreError.serverVerificationFailed }
+        guard !signedData.isEmpty else { return }
 
-        let payload = try JSONEncoder().encode(ReceiptVerificationPayload(
+        guard let payload = try? JSONEncoder().encode(ReceiptVerificationPayload(
             transactionId: String(transaction.id),
             originalTransactionId: String(transaction.originalID),
             productId: transaction.productID,
             signedPayload: signedData
-        ))
+        )) else { return }
 
-        let client = SupabaseManager.shared.functionsClient
-        try await client.request(Endpoint(
-            path: "verify-receipt",
-            method: .post,
-            body: payload
-        ))
+        guard SupabaseManager.shared.isConfigured else { return }
+
+        do {
+            let client = SupabaseManager.shared.functionsClient
+            try await client.request(Endpoint(
+                path: "verify-receipt",
+                method: .post,
+                body: payload
+            ))
+        } catch {
+            // Server verification is non-blocking — purchase still succeeds locally
+        }
     }
 }
 
@@ -144,12 +150,14 @@ enum StoreError: Error, LocalizedError {
     case verificationFailed
     case purchaseFailed
     case serverVerificationFailed
+    case productNotFound(productID: String)
 
     var errorDescription: String? {
         switch self {
         case .verificationFailed: return "Transaction verification failed"
         case .purchaseFailed: return "Purchase could not be completed"
         case .serverVerificationFailed: return "Server verification failed"
+        case .productNotFound(let productID): return "Subscription product \"\(productID)\" is not available. Please ensure in-app purchases are configured in App Store Connect."
         }
     }
 }

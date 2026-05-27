@@ -34,22 +34,35 @@ xcrun altool --upload-app -f build/export/medlingo.ipa -t ios \
 | Field | Value |
 |-------|--------|
 | Version | 1.0 |
-| Build | 3+ (auto-incremented in CD) |
+| Build | 202605271200 (local) / auto-incremented in CD |
 | Bundle ID | `wcs.medlingo` |
 | Category | Education / Medical |
 | Age | 4+ |
 
-Copy from **`AppStoreReviewNotes.md`**:
-- **App Review Notes** → Notes for reviewer
-- **Promotional Text** → 170-char promo
-- **Description** → full listing
-- **What's New** → release notes
+Copy from **`AppStoreSubmissionForm.md`** (full field-by-field guide) or:
+- **`AppStoreReviewNotes.md`** → App Review Notes + response templates
+- **`AppStoreMetadata.md`** → metadata reference
+- **`AppStoreSubmissionForm.md`** → Promotional Text, Description, Keywords, privacy, age rating, export compliance
+
+## Distribution screenshots
+
+Generate six App Store screenshots (6.7" / 1290×2796) from the simulator:
+
+```bash
+bash scripts/capture-distribution-screenshots.sh
+```
+
+Output: `distribution/screenshots/6.7-inch/` (see `distribution/README.md` for upload order).
+
+App icon for Connect: `distribution/marketing/app-icon-1024.png`
 
 ## Pre-submission checklist
 
 - [ ] TestFlight build processed (no missing compliance)
 - [ ] Push Notifications: set `aps-environment` to **production** in Apple Developer + regenerate profile
-- [ ] Screenshots uploaded (6.7" required)
+- [ ] Screenshots generated and uploaded (6.7" required — `distribution/screenshots/6.7-inch/`)
+- [ ] App icon 1024×1024 uploaded (`distribution/marketing/app-icon-1024.png`)
+- [ ] `AppStoreSubmissionForm.md` fields pasted into App Store Connect
 - [ ] Privacy Policy URL: https://wcs-full.vercel.app/privacy
 - [ ] Sandbox IAP tested
 - [ ] Export compliance answered (standard HTTPS only → No)

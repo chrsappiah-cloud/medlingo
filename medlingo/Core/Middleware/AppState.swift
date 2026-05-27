@@ -53,7 +53,7 @@ final class AppState {
 
     func handlePurchase(productID: String) async throws -> PurchaseResult {
         guard let product = storeKitService.availableProducts.first(where: { $0.id == productID }) else {
-            throw StoreError.purchaseFailed
+            throw StoreError.productNotFound(productID: productID)
         }
         analyticsService.track(.purchaseInitiated(productID: productID))
         let result = try await storeKitService.purchase(product)
