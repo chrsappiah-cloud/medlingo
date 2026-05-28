@@ -46,8 +46,10 @@ final class AppState {
         self.authService = authService ?? AuthService(sessionStore: sessionStore ?? UserDefaultsSessionStore())
 
         if configuration.isUITestMode {
-            currentUserRole = .learner
+            currentUserRole = configuration.seedsCreatorRole ? .administrator : .learner
             isOnboardingComplete = true
+        } else if configuration.seedsCreatorRole {
+            currentUserRole = .administrator
         }
         if configuration.seedsExpiredToken {
             self.authService.seedExpiredSessionForTesting()

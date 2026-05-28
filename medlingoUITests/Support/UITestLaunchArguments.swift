@@ -7,6 +7,7 @@ enum UITestLaunchArguments {
     static let productsFailure = "-mockStoreKit"
     static let productsFailureValue = "productsFailure"
     static let seedExpiredToken = "-seedExpiredToken"
+    static let seedCreatorRole = "-seedCreatorRole"
     static let restoreSuccess = "-mockStoreKit"
     static let restoreSuccessValue = "restoreSuccess"
 
@@ -22,5 +23,9 @@ enum UITestLaunchArguments {
 
     static func restorePurchasesSuccess() -> [String] {
         [uiTestMode, restoreSuccess, restoreSuccessValue]
+    }
+
+    static func aiVideoGeneration() -> [String] {
+        [uiTestMode, seedCreatorRole, "-mockAIGeneration"]
     }
 }

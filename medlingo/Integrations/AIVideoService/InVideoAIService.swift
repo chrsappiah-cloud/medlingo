@@ -12,7 +12,14 @@ final class InVideoAIService {
     static let shared = InVideoAIService()
 
     private let functionsClient: NetworkClientProtocol
-    private var isDemo: Bool { !SupabaseManager.shared.isConfigured || Config.replicateAPIToken.isEmpty }
+    var launchConfiguration: AppLaunchConfiguration = .shared
+
+    private var isDemo: Bool {
+        if launchConfiguration.forcesDemoAIGeneration {
+            return true
+        }
+        return !SupabaseManager.shared.isConfigured || Config.replicateAPIToken.isEmpty
+    }
 
     struct AIModel: Identifiable, Hashable {
         let id: String
@@ -85,8 +92,12 @@ final class InVideoAIService {
         StylePreset(id: "none", name: "No Style", icon: "minus.circle", promptSuffix: ""),
     ]
 
-    init(client: NetworkClientProtocol? = nil) {
+    init(
+        client: NetworkClientProtocol? = nil,
+        launchConfiguration: AppLaunchConfiguration = .shared
+    ) {
         self.functionsClient = client ?? SupabaseManager.shared.functionsClient
+        self.launchConfiguration = launchConfiguration
     }
 
     // MARK: - Generation

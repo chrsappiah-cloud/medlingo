@@ -2,6 +2,7 @@ import Testing
 import Foundation
 @testable import medlingo
 
+@Suite(.serialized)
 struct NetworkClientBehaviorTests {
     private func makeClient(handler: @escaping (URLRequest) throws -> (HTTPURLResponse, Data)) -> NetworkClient {
         MockURLProtocol.requestHandler = handler

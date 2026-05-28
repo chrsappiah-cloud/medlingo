@@ -34,6 +34,10 @@ struct AppLaunchConfiguration: Sendable {
     var seedsEmptyDatabase: Bool { arguments.contains("-seedEmptyDatabase") }
     var seedsExpiredToken: Bool { arguments.contains("-seedExpiredToken") }
     var seedsMigratedState: Bool { arguments.contains("-seedMigratedState") }
+    var seedsCreatorRole: Bool { arguments.contains("-seedCreatorRole") }
+    var forcesDemoAIGeneration: Bool {
+        arguments.contains("-mockAIGeneration") || (isUITestMode && seedsCreatorRole)
+    }
     var skipsOnboarding: Bool { isUITestMode }
 
     public init(arguments: [String] = ProcessInfo.processInfo.arguments) {
