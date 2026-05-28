@@ -10,6 +10,11 @@
 
 ## Resolution Center reply (paste into App Store Connect)
 
+**Copy from:** `docs/AppStoreResolutionCenterReply-2.1b.txt` (plain text, ready to paste)
+
+<details>
+<summary>Full reply (also in .txt file)</summary>
+
 ```
 Hello App Review,
 
@@ -51,6 +56,10 @@ Best regards,
 Christopher Appiah-Thompson
 christopher.appiahthompson@myworldclass.org
 ```
+
+</details>
+
+**IAP metadata (display names, descriptions):** `docs/AppStoreIAPProductMetadata.md`
 
 ---
 
