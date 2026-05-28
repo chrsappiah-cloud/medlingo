@@ -13,7 +13,7 @@ final class medlingoUITestsLaunchTests: XCTestCase {
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-UITesting"]
+        app.launchArguments = UITestLaunchArguments.standardSmoke()
         app.launch()
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
@@ -26,7 +26,7 @@ final class medlingoUITestsLaunchTests: XCTestCase {
     func testLaunchPerformance() throws {
         // Top-tier iOS apps target <2.5s cold launch on simulator (99th percentile).
         let app = XCUIApplication()
-        app.launchArguments = ["-UITesting"]
+        app.launchArguments = UITestLaunchArguments.standardSmoke()
 
         let options = XCTMeasureOptions()
         options.iterationCount = 5

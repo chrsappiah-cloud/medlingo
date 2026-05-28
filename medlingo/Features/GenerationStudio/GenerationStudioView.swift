@@ -3,7 +3,6 @@ import AVKit
 
 struct GenerationStudioView: View {
     @State private var viewModel = GenerationStudioViewModel()
-    @State private var showingResult = false
     @Environment(\.dismiss) private var dismiss
 
     private var isCreator: Bool {
@@ -67,7 +66,9 @@ struct GenerationStudioView: View {
     }
 
     private var studioContent: some View {
-        ScrollView {
+        @Bindable var viewModel = viewModel
+
+        return ScrollView {
             VStack(spacing: AppSpacing.lg) {
                 headerSection
                 mediaTypePicker
@@ -86,7 +87,7 @@ struct GenerationStudioView: View {
                 generatingOverlay
             }
         }
-        .sheet(isPresented: $showingResult) {
+        .sheet(isPresented: $viewModel.showResultSheet) {
             if let artwork = viewModel.lastGenerated {
                 ArtworkResultSheet(artwork: artwork)
             }
@@ -352,10 +353,10 @@ struct GenerationStudioView: View {
             title: "Generate \(viewModel.selectedMediaType.displayName)",
             action: {
                 Task { await viewModel.generate() }
-                viewModel.isGenerating = true
             },
             isLoading: viewModel.isGenerating
         )
+        .accessibilityIdentifier("generate-artwork-button")
         .disabled(viewModel.prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         .opacity(viewModel.prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
     }
@@ -408,12 +409,6 @@ struct GenerationStudioView: View {
             .padding(AppSpacing.xl)
         }
         .transition(.opacity)
-        .onChange(of: viewModel.generationComplete) { _, complete in
-            if complete {
-                showingResult = true
-                viewModel.generationComplete = false
-            }
-        }
     }
 
     static let promptSuggestions = [
@@ -470,6 +465,7 @@ struct ArtworkResultSheet: View {
                             Text("Added to Your Collection")
                                 .font(AppTypography.headline)
                                 .foregroundColor(AppColor.emerald)
+                                .accessibilityIdentifier("generation-result-success")
                         }
 
                         AppCard {
@@ -562,7 +558,7 @@ final class GenerationStudioViewModel {
     var isGenerating = false
     var generationProgress: Double = 0
     var generationStatusMessage = "Preparing..."
-    var generationComplete = false
+    var showResultSheet = false
     var lastGenerated: GeneratedArtwork?
     var errorMessage: String?
 
@@ -597,6 +593,10 @@ final class GenerationStudioViewModel {
     }
 
     init() {
+        if AppLaunchConfiguration.shared.forcesDemoAIGeneration {
+            selectedMediaType = .video
+            prompt = "Detailed anatomical illustration of the human heart showing all four chambers"
+        }
         updateModelSelection()
     }
 
@@ -612,7 +612,7 @@ final class GenerationStudioViewModel {
 
         isGenerating = true
         generationProgress = 0
-        generationComplete = false
+        showResultSheet = false
         errorMessage = nil
 
         let enhancedPrompt = service.enhancePrompt(prompt, style: selectedStyle)
@@ -641,7 +641,7 @@ final class GenerationStudioViewModel {
                 lastGenerated = artwork
                 collectionStore.transmitFromGeneration(artwork)
                 isGenerating = false
-                generationComplete = true
+                showResultSheet = true
 
             } catch is CancellationError {
                 isGenerating = false
@@ -650,6 +650,8 @@ final class GenerationStudioViewModel {
                 isGenerating = false
             }
         }
+
+        await generationTask?.value
     }
 
     func cancelGeneration() {

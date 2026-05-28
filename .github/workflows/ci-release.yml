@@ -1,0 +1,55 @@
+name: CI - Release Gate
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*', 'release/*']
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-gate:
+    name: Full ARC Shield Regression
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
+      - name: Select Xcode
+        run: bash scripts/select-xcode.sh
+
+      - name: Prepare simulator
+        env:
+          CI_SIM_NAME: CI Release iPhone
+        run: bash scripts/ci-prepare-simulator.sh
+
+      - name: Run full test suite
+        run: |
+          xcodebuild test \
+            -project "${{ github.workspace }}/medlingo.xcodeproj" \
+            -scheme medlingo \
+            -destination "platform=iOS Simulator,id=$SIM_ID" \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath ReleaseTestResults.xcresult
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-test-results
+          path: ReleaseTestResults.xcresult
+          if-no-files-found: ignore
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
+      - name: Submission checklist reminder
+        run: |
+          echo "## Release gate passed" >> $GITHUB_STEP_SUMMARY
+          echo "Complete docs/AppStoreSubmissionChecklist.md before App Store upload." >> $GITHUB_STEP_SUMMARY

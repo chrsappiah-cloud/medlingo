@@ -43,6 +43,38 @@ final class DistributionScreenshotTests: XCTestCase {
 
         tapTab("Learn")
         XCTAssertTrue(app.staticTexts["Medlingo"].waitForExistence(timeout: 5))
+
+        capturePremiumPaywallForIAPReview(outputDir: outputDir)
+    }
+
+    /// App Review screenshot for In-App Purchase products (Account → Premium Plan).
+    @MainActor
+    private func capturePremiumPaywallForIAPReview(outputDir: String) {
+        openAccountTab()
+        let premiumPlan = app.staticTexts["Premium Plan"]
+        if !premiumPlan.waitForExistence(timeout: 5) {
+            let premiumLabel = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Premium'")).firstMatch
+            XCTAssertTrue(premiumLabel.waitForExistence(timeout: 5), "Premium Plan entry not found")
+            premiumLabel.tap()
+        } else {
+            premiumPlan.tap()
+        }
+        XCTAssertTrue(app.navigationBars["Subscription"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Available Plans"].waitForExistence(timeout: 8))
+        capture(name: "iap-premium-paywall", outputDir: outputDir)
+    }
+
+    @MainActor
+    private func openAccountTab() {
+        tapTab("Account")
+        if app.navigationBars["Account"].waitForExistence(timeout: 3) { return }
+        tapTab("More")
+        let account = app.buttons["Account"]
+        if account.waitForExistence(timeout: 3) {
+            account.tap()
+            return
+        }
+        app.staticTexts["Account"].tap()
     }
 
     @MainActor

@@ -1,0 +1,35 @@
+Hello App Review,
+
+Thank you for your follow-up regarding Submission ID 610c83c3-b828-4203-b64b-827789899d61 (Version 1.0, build 202605271300).
+
+We have resolved Guideline 2.1(b) — In-App Purchase products not submitted for review — as follows:
+
+1. IN-APP PURCHASE PRODUCTS SUBMITTED
+All In-App Purchase products referenced in the app are now submitted for review in App Store Connect with complete metadata and App Review screenshots:
+
+• com.medlingo.premium.monthly — Auto-Renewable Subscription (Premium Monthly)
+• com.medlingo.premium.yearly — Auto-Renewable Subscription (Premium Yearly)
+• com.medlingo.sessions.5pack — Consumable (5 Session Pack)
+• com.medlingo.sessions.10pack — Consumable (10 Session Pack)
+• com.medlingo.chapter.unlock — Non-Consumable (Chapter Unlock)
+
+2. NEW BINARY
+We have uploaded a new build to App Store Connect and attached it to this version submission so review can proceed together with the IAP products.
+
+3. HOW TO TEST PREMIUM (SANDBOX)
+• Launch the app on iPad or iPhone.
+• Open Account (on iPad: sidebar or tab; on iPhone: Account tab or More → Account).
+• Tap Premium Plan to open the subscription screen.
+• Subscription plans load via StoreKit 2. Tap Upgrade on a plan to present the native purchase sheet (use a Sandbox Apple ID).
+• Restore Purchases is on the same screen.
+
+4. APP REVIEW SCREENSHOTS FOR IAP
+Each IAP product includes an App Review screenshot showing the Premium subscription paywall (Account → Premium Plan).
+
+Core learning content (Learn, Practice, Collection, Sessions, Progress) remains fully available without sign-in or purchase. Premium unlocks all stages and advanced practice modes.
+
+Please let us know if you need anything further.
+
+Best regards,
+Christopher Appiah-Thompson
+christopher.appiahthompson@myworldclass.org

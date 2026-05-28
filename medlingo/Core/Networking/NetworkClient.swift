@@ -37,27 +37,32 @@ final class NetworkClient: NetworkClientProtocol {
     private let baseURL: URL
     private var defaultHeaders: [String: String]
     private let tokenProvider: (() async -> String?)?
+    var launchConfiguration: AppLaunchConfiguration
 
     init(
         baseURL: URL,
         tokenProvider: @escaping () async -> String?,
-        session: URLSession = .shared
+        session: URLSession = .shared,
+        launchConfiguration: AppLaunchConfiguration = .shared
     ) {
         self.baseURL = baseURL
         self.tokenProvider = tokenProvider
         self.defaultHeaders = ["Content-Type": "application/json"]
         self.session = session
+        self.launchConfiguration = launchConfiguration
     }
 
     init(
         baseURL: URL,
         defaultHeaders: [String: String] = [:],
-        session: URLSession = .shared
+        session: URLSession = .shared,
+        launchConfiguration: AppLaunchConfiguration = .shared
     ) {
         self.baseURL = baseURL
         self.defaultHeaders = defaultHeaders
         self.tokenProvider = nil
         self.session = session
+        self.launchConfiguration = launchConfiguration
     }
 
     func setHeader(_ key: String, value: String) {
@@ -92,6 +97,13 @@ final class NetworkClient: NetworkClientProtocol {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
+        if launchConfiguration.isOfflineNetwork {
+            RuntimeLogger.log(.network, "blocked request offline path=\(endpoint.path)", level: RuntimeLogger.Level.error)
+            throw NetworkError.transportError
+        }
+
+        RuntimeLogger.log(.network, "\(endpoint.method.rawValue) \(endpoint.path)")
+
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -99,6 +111,7 @@ final class NetworkClient: NetworkClientProtocol {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
+            RuntimeLogger.log(.network, "HTTP \(httpResponse.statusCode) path=\(endpoint.path)", level: RuntimeLogger.Level.error)
             throw NetworkError.httpError(statusCode: httpResponse.statusCode, data: data)
         }
 
@@ -110,6 +123,7 @@ enum NetworkError: Error, LocalizedError {
     case invalidResponse
     case httpError(statusCode: Int, data: Data)
     case decodingError(Error)
+    case transportError
 
     var errorDescription: String? {
         switch self {
@@ -119,6 +133,8 @@ enum NetworkError: Error, LocalizedError {
             return "Server error (code \(code))"
         case .decodingError(let error):
             return "Data error: \(error.localizedDescription)"
+        case .transportError:
+            return "No internet connection"
         }
     }
 }
