@@ -82,31 +82,34 @@ struct AccountView: View {
     }
 
     private var subscriptionSection: some View {
-        Section("Subscription") {
-            NavigationLink {
-                SubscriptionView()
-            } label: {
-                HStack {
-                    Label("Premium Plan", systemImage: "crown.fill")
-                        .foregroundColor(AppColor.textPrimary)
-                    Spacer()
-                    Text("Active")
-                        .font(AppTypography.caption1)
-                        .foregroundColor(AppColor.emerald)
-                }
-            }
-            .accessibilityIdentifier("premium-plan-link")
-            NavigationLink {
-                PurchaseHistoryView()
-            } label: {
-                Label("Purchase History", systemImage: "clock.arrow.circlepath")
+        Section {
+            HStack {
+                Label("All Content Free", systemImage: "crown.fill")
                     .foregroundColor(AppColor.textPrimary)
+                Spacer()
+                Text("Active")
+                    .font(AppTypography.caption1)
+                    .foregroundColor(AppColor.emerald)
             }
-            Button {
-                Task { try? await appState.storeKitService.restorePurchases() }
-            } label: {
-                Label("Restore Purchases", systemImage: "arrow.clockwise")
-                    .foregroundColor(AppColor.diamond)
+        } header: {
+            Text("Subscription")
+        } footer: {
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text("All stages, lessons, and practice modes are available for free.")
+                    .font(AppTypography.caption2)
+                HStack(spacing: AppSpacing.sm) {
+                    Link(destination: AppConstants.privacyURL) {
+                        Text("Privacy Policy")
+                            .font(AppTypography.caption2)
+                            .foregroundColor(AppColor.diamond)
+                    }
+                    Link(destination: AppConstants.termsURL) {
+                        Text("Terms of Use (EULA)")
+                            .font(AppTypography.caption2)
+                            .foregroundColor(AppColor.diamond)
+                    }
+                }
+                .padding(.top, AppSpacing.xxs)
             }
         }
         .listRowBackground(AppColor.surface)
@@ -197,34 +200,6 @@ struct AccountView: View {
 
 // MARK: - Sub-screens
 
-struct PurchaseHistoryView: View {
-    var body: some View {
-        List {
-            ForEach(0..<3, id: \.self) { i in
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(["Premium Monthly", "Session Pack (5)", "Premium Monthly"][i])
-                            .font(AppTypography.subheadline)
-                            .foregroundColor(AppColor.textPrimary)
-                        Text(["May 6, 2026", "Apr 20, 2026", "Apr 6, 2026"][i])
-                            .font(AppTypography.caption2)
-                            .foregroundColor(AppColor.textTertiary)
-                    }
-                    Spacer()
-                    Text(["$9.99", "$24.99", "$9.99"][i])
-                        .font(AppTypography.subheadline)
-                        .foregroundColor(AppColor.gold)
-                }
-            }
-            .listRowBackground(AppColor.surface)
-        }
-        .scrollContentBackground(.hidden)
-        .background(AppColor.background)
-        .navigationTitle("Purchase History")
-        .preferredColorScheme(.dark)
-    }
-}
-
 struct NotificationsSettingsView: View {
     @State private var lessonReminders = true
     @State private var sessionAlerts = true
@@ -303,7 +278,7 @@ struct HelpCenterView: View {
     var body: some View {
         List {
             Section("FAQ") {
-                FAQRow(question: "How do I unlock premium stages?", answer: "Subscribe to Premium or purchase individual stage packs from the subscription page.")
+                FAQRow(question: "How do I unlock premium stages?", answer: "All stages are available for free. No subscription or purchase needed.")
                 FAQRow(question: "How do tutor sessions work?", answer: "Browse available tutors, book a session, and join via video call at the scheduled time.")
                 FAQRow(question: "Can I study offline?", answer: "Yes! Previously loaded stages and flashcards are cached locally for offline access.")
             }
@@ -383,203 +358,6 @@ struct FAQRow: View {
                     .foregroundColor(AppColor.textSecondary)
             }
         }
-    }
-}
-
-struct SubscriptionView: View {
-    @Environment(AppState.self) private var appState
-    @State private var isLoadingProducts = false
-    @State private var isPurchasing = false
-    @State private var purchaseError: String?
-    @State private var showErrorAlert = false
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: AppSpacing.lg) {
-                if isLoadingProducts {
-                    VStack(spacing: AppSpacing.sm) {
-                        ProgressView()
-                            .tint(AppColor.gold)
-                        Text("Loading plans...")
-                            .font(AppTypography.subheadline)
-                            .foregroundColor(AppColor.textSecondary)
-                    }
-                    .padding(.top, AppSpacing.xl)
-                }
-                if let purchaseError, !purchaseError.isEmpty, !isLoadingProducts {
-                    Text(purchaseError)
-                        .font(AppTypography.subheadline)
-                        .foregroundColor(AppColor.error)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, AppSpacing.md)
-                        .accessibilityIdentifier("subscription-load-error")
-                }
-                currentPlanCard
-                availablePlansSection
-                copyrightFooter
-            }
-            .padding(AppSpacing.md)
-        }
-        .background(AppColor.background)
-        .navigationTitle("Subscription")
-        .preferredColorScheme(.dark)
-        .alert("Purchase Error", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(purchaseError ?? "An unknown error occurred. Please try again.")
-        }
-        .task {
-            await loadProducts()
-        }
-        .onAppear {
-            RuntimeLogger.breadcrumb("subscription")
-        }
-    }
-
-    private func loadProducts() async {
-        if AppLaunchConfiguration.shared.storeKitScenario == .productsFailure {
-            purchaseError = "No subscription products are available at this time."
-            showErrorAlert = true
-            return
-        }
-
-        isLoadingProducts = true
-        defer { isLoadingProducts = false }
-        do {
-            let products = try await appState.storeKitService.loadProducts()
-            if products.isEmpty {
-                purchaseError = "No subscription products are available at this time."
-            }
-        } catch {
-            purchaseError = "Failed to load subscription plans: \(error.localizedDescription)"
-        }
-    }
-
-    private func purchaseProduct(_ productID: String) async {
-        guard !isPurchasing else { return }
-        isPurchasing = true
-        defer { isPurchasing = false }
-        do {
-            let result = try await appState.handlePurchase(productID: productID)
-            switch result {
-            case .success:
-                purchaseError = nil
-            case .pending:
-                purchaseError = "Purchase is pending. It will complete once processed."
-                showErrorAlert = true
-            case .cancelled:
-                purchaseError = nil
-            case .failed(let error):
-                purchaseError = error.localizedDescription
-                showErrorAlert = true
-            }
-        } catch {
-            purchaseError = error.localizedDescription
-            showErrorAlert = true
-        }
-    }
-
-    private var currentPlanCard: some View {
-        AppCard {
-            VStack(spacing: AppSpacing.sm) {
-                Image(systemName: "crown.fill")
-                    .font(.largeTitle)
-                    .foregroundColor(AppColor.gold)
-                    .shadow(color: AppColor.gold.opacity(0.6), radius: 8)
-                Text("Premium Monthly")
-                    .font(AppTypography.title2)
-                    .foregroundColor(AppColor.textPrimary)
-                Text("Renews June 6, 2026")
-                    .font(AppTypography.subheadline)
-                    .foregroundColor(AppColor.textSecondary)
-            }
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    private var availablePlansSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("Available Plans")
-                .font(AppTypography.title3)
-                .foregroundColor(AppColor.textPrimary)
-
-            PlanCard(
-                name: "Monthly",
-                price: "$9.99/mo",
-                features: ["Full stage library", "All practice modes", "Progress analytics", "Tutor messaging"],
-                isCurrentPlan: true,
-                onUpgrade: {},
-                isLoading: false
-            )
-            PlanCard(
-                name: "Yearly",
-                price: "$79.99/yr",
-                features: ["Everything in Monthly", "Save 33%", "5 free tutor sessions", "Priority support"],
-                isCurrentPlan: false,
-                onUpgrade: {
-                    Task { await purchaseProduct("com.medlingo.premium.yearly") }
-                },
-                isLoading: isPurchasing
-            )
-        }
-    }
-
-    private var copyrightFooter: some View {
-        Text(AppConstants.copyright)
-            .font(AppTypography.caption2)
-            .foregroundColor(AppColor.textTertiary)
-            .padding(.top, AppSpacing.lg)
-    }
-}
-
-struct PlanCard: View {
-    let name: String
-    let price: String
-    let features: [String]
-    let isCurrentPlan: Bool
-    let onUpgrade: () -> Void
-    let isLoading: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            HStack {
-                Text(name)
-                    .font(AppTypography.headline)
-                    .foregroundColor(AppColor.textPrimary)
-                Spacer()
-                Text(price)
-                    .font(AppTypography.title3)
-                    .foregroundStyle(AppColor.goldGradient)
-            }
-            ForEach(features, id: \.self) { feature in
-                HStack(spacing: AppSpacing.xs) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(AppColor.emerald)
-                        .font(.caption)
-                    Text(feature)
-                        .font(AppTypography.subheadline)
-                        .foregroundColor(AppColor.textSecondary)
-                }
-            }
-            if isCurrentPlan {
-                Text("Current Plan")
-                    .font(AppTypography.caption1)
-                    .foregroundColor(AppColor.gold)
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.xxs)
-                    .background(AppColor.gold.opacity(0.15))
-                    .clipShape(Capsule())
-            } else {
-                PrimaryButton(title: "Upgrade", action: onUpgrade, isLoading: isLoading)
-            }
-        }
-        .padding(AppSpacing.md)
-        .background(AppColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.lg)
-                .stroke(isCurrentPlan ? AppColor.gold.opacity(0.4) : Color.white.opacity(0.05), lineWidth: 1)
-        )
     }
 }
 

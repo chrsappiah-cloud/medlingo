@@ -24,7 +24,6 @@ final class NavigationRouter {
         case bookSession(sessionID: UUID)
         case sessionRoom(sessionID: UUID)
         case messages
-        case subscription
         case settings
         case adminConsole
         case generationStudio

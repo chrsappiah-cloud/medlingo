@@ -15,9 +15,6 @@ enum AnalyticsEvent {
     case chapterCompleted(chapterID: UUID, masteryScore: Double)
     case sessionBooked(sessionID: UUID, tutorID: UUID)
     case sessionAttended(sessionID: UUID, durationMinutes: Int)
-    case purchaseInitiated(productID: String)
-    case purchaseCompleted(productID: String, revenue: Decimal)
-    case purchaseFailed(productID: String, reason: String)
     case streakUpdated(count: Int)
     case appOpened
     case screenViewed(name: String)
@@ -32,9 +29,6 @@ enum AnalyticsEvent {
         case .chapterCompleted: return "chapter_completed"
         case .sessionBooked: return "session_booked"
         case .sessionAttended: return "session_attended"
-        case .purchaseInitiated: return "purchase_initiated"
-        case .purchaseCompleted: return "purchase_completed"
-        case .purchaseFailed: return "purchase_failed"
         case .streakUpdated: return "streak_updated"
         case .appOpened: return "app_opened"
         case .screenViewed: return "screen_viewed"
@@ -59,12 +53,6 @@ enum AnalyticsEvent {
             return ["session_id": sessionID.uuidString, "tutor_id": tutorID.uuidString]
         case .sessionAttended(let sessionID, let duration):
             return ["session_id": sessionID.uuidString, "duration_minutes": "\(duration)"]
-        case .purchaseInitiated(let productID):
-            return ["product_id": productID]
-        case .purchaseCompleted(let productID, let revenue):
-            return ["product_id": productID, "revenue": "\(revenue)"]
-        case .purchaseFailed(let productID, let reason):
-            return ["product_id": productID, "reason": reason]
         case .streakUpdated(let count):
             return ["count": "\(count)"]
         case .appOpened:

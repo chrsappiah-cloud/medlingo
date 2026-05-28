@@ -7,7 +7,6 @@ enum RuntimeLogger {
         case lifecycle = "app.lifecycle"
         case auth = "auth.session"
         case network = "network.requests"
-        case purchase = "purchase.flow"
         case permissions = "permissions"
         case deepLink = "deepLink"
         case migration = "persistence.migration"
