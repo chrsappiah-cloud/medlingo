@@ -22,6 +22,8 @@ Complete before every App Store Connect submission.
 
 ## Subscriptions (StoreKit)
 
+- [ ] All IAP products **Ready to Submit** in App Store Connect with review screenshots (`docs/AppStoreIAPResubmission.md`)
+- [ ] IAP products included on the app version submission
 - [ ] Subscription plans load or show clear error (not silent failure)
 - [ ] Upgrade button shows loading state during purchase
 - [ ] Restore Purchases completes without crash

@@ -1,7 +1,10 @@
 name: CD - Deploy to TestFlight
 
+# Runs only after CI succeeds on main, or via manual dispatch.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI - Build & Test (ARC Shield)"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -16,10 +19,26 @@ env:
   BUNDLE_ID: wcs.medlingo
 
 jobs:
+  verify-ci-passed:
+    name: Verify CI Gate
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: CI must have succeeded
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ] && [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "::error::CI workflow did not succeed — skipping TestFlight deploy"
+            exit 1
+          fi
+          echo "CI verified — proceeding to TestFlight"
+
   production-preflight:
     name: Production Preflight
     runs-on: macos-15
     timeout-minutes: 25
+    needs: verify-ci-passed
     steps:
       - uses: actions/checkout@v4
         env:
@@ -144,10 +163,11 @@ jobs:
       - name: Post deployment summary
         run: |
           echo "### Deployment Complete" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: $(defaults read $(pwd)/medlingo/Info.plist CFBundleShortVersionString)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: $(defaults read $(pwd)/medlingo/Info.plist CFBundleShortVersionString 2>/dev/null || echo 1.0)" >> $GITHUB_STEP_SUMMARY
           echo "- **Build**: $BUILD_NUMBER" >> $GITHUB_STEP_SUMMARY
           echo "- **Bundle ID**: $BUNDLE_ID" >> $GITHUB_STEP_SUMMARY
           echo "- **Destination**: TestFlight" >> $GITHUB_STEP_SUMMARY
+          echo "- **Next**: Submit IAP products + new build per docs/AppStoreIAPResubmission.md" >> $GITHUB_STEP_SUMMARY
 
       - name: Clean up keychain
         if: always()

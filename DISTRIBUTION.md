@@ -21,8 +21,8 @@ xcrun altool --upload-app -f build/export/medlingo.ipa -t ios \
 
 ## GitHub → TestFlight (automated)
 
-1. Merge PR to `main` (requires **CI Gate** green).
-2. CD workflow (`CD - Deploy to TestFlight`) runs automatically on `main` push.
+1. Merge PR to `main` (requires **CI Gate** green — unit, integration, and UI tests on main).
+2. CD workflow (`CD - Deploy to TestFlight`) runs automatically after CI succeeds on `main`.
 3. Required GitHub **production** environment secrets:
    - `BUILD_CERTIFICATE_BASE64`, `P12_PASSWORD`, `BUILD_PROVISION_PROFILE_BASE64`, `KEYCHAIN_PASSWORD`
    - `TEAM_ID`, `PROVISIONING_PROFILE_NAME`

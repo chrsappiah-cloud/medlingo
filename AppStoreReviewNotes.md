@@ -151,6 +151,10 @@ Copy these into **App Store Connect → Resolution Center** when replying to rev
 
 > Subscription products (Premium Monthly/Yearly) unlock all stages and practice modes. Consumable session packs and chapter unlock are documented in App Review Notes. All products use StoreKit 2 with on-device verification. Sandbox Apple ID testing is supported; Restore Purchases is available under Account.
 
+### If rejection cites Guideline 2.1(b) — IAP not submitted for review
+
+> We have submitted all In-App Purchase products referenced in the app for review in App Store Connect, including App Review screenshots for each product. Products: `com.medlingo.premium.monthly`, `com.medlingo.premium.yearly`, `com.medlingo.sessions.5pack`, `com.medlingo.sessions.10pack`, `com.medlingo.chapter.unlock`. A new binary has been uploaded with this submission. Premium is reachable via Account → Premium Plan; Sandbox Apple ID can be used to test Upgrade and Restore Purchases. Full reply text: see `docs/AppStoreIAPResubmission.md`.
+
 ---
 
 ## TestFlight Release Notes (internal)

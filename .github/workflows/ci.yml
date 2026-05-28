@@ -85,11 +85,13 @@ jobs:
           ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
   integration-tests:
-    name: Integration Tests (Main)
+    name: Integration Tests
     runs-on: macos-15
     timeout-minutes: 30
     needs: build-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.base_ref == 'main')
 
     steps:
       - name: Checkout
@@ -226,10 +228,12 @@ jobs:
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [build-and-test, ui-tests, code-quality]
+    needs: [build-and-test, ui-tests, code-quality, integration-tests]
     if: always()
     steps:
       - name: Check CI results
+        env:
+          IS_MAIN: ${{ github.ref == 'refs/heads/main' || github.base_ref == 'main' }}
         run: |
           FAILED=0
           if [ "${{ needs.build-and-test.result }}" != "success" ]; then
@@ -240,12 +244,19 @@ jobs:
             echo "::error::Code Quality check failed"
             FAILED=1
           fi
-          if [ "$FAILED" -eq 1 ]; then exit 1; fi
-          if [ "${{ needs.ui-tests.result }}" == "failure" ]; then
-            echo "::warning::UI Tests failed — merge allowed; fix before App Store submission"
-          elif [ "${{ needs.ui-tests.result }}" == "success" ]; then
-            echo "UI Tests passed"
+          if [ "$IS_MAIN" = "true" ]; then
+            if [ "${{ needs.integration-tests.result }}" != "success" ]; then
+              echo "::error::Integration Tests failed or skipped on main"
+              FAILED=1
+            fi
+            if [ "${{ needs.ui-tests.result }}" != "success" ]; then
+              echo "::error::UI Tests failed on main — blocks merge and TestFlight"
+              FAILED=1
+            fi
           else
-            echo "::warning::UI Tests did not complete (${{ needs.ui-tests.result }})"
+            if [ "${{ needs.ui-tests.result }}" == "failure" ]; then
+              echo "::warning::UI Tests failed on feature branch — fix before merging to main"
+            fi
           fi
+          if [ "$FAILED" -eq 1 ]; then exit 1; fi
           echo "CI Gate passed — ready for merge and TestFlight distribution"
