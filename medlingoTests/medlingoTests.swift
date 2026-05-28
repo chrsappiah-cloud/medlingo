@@ -428,7 +428,6 @@ struct AnalyticsServiceTests {
             (.lessonStarted(chapterID: UUID(), lessonID: UUID()), "lesson_started"),
             (.lessonCompleted(chapterID: UUID(), lessonID: UUID(), durationSeconds: 300), "lesson_completed"),
             (.exerciseAttempted(type: "mcq", chapterID: UUID(), score: 0.8), "exercise_attempted"),
-            (.purchaseCompleted(productID: "test", revenue: 9.99), "purchase_completed"),
             (.streakUpdated(count: 7), "streak_updated"),
         ]
         for (event, expectedName) in events {
@@ -441,17 +440,6 @@ struct AuthErrorTests {
 
     @Test func authErrorDescriptions() {
         let errors: [AuthError] = [.invalidCredential, .sessionExpired, .networkError, .accountDisabled]
-        for error in errors {
-            #expect(error.errorDescription != nil)
-            #expect(!error.errorDescription!.isEmpty)
-        }
-    }
-}
-
-struct StoreErrorTests {
-
-    @Test func storeErrorDescriptions() {
-        let errors: [StoreError] = [.verificationFailed, .purchaseFailed, .serverVerificationFailed]
         for error in errors {
             #expect(error.errorDescription != nil)
             #expect(!error.errorDescription!.isEmpty)

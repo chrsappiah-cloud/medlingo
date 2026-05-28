@@ -4,7 +4,6 @@ import Foundation
 protocol AppBootstrapperProtocol {
     func bootstrap(
         authService: any AuthServiceProtocol,
-        storeKitService: StoreKitService,
         collectionStore: CollectionStore,
         analyticsService: AnalyticsService,
         configuration: AppLaunchConfiguration
@@ -15,7 +14,6 @@ protocol AppBootstrapperProtocol {
 struct LiveAppBootstrapper: AppBootstrapperProtocol {
     func bootstrap(
         authService: any AuthServiceProtocol,
-        storeKitService: StoreKitService,
         collectionStore: CollectionStore,
         analyticsService: AnalyticsService,
         configuration: AppLaunchConfiguration
@@ -34,17 +32,7 @@ struct LiveAppBootstrapper: AppBootstrapperProtocol {
             return
         }
 
-        storeKitService.startListening()
-
         await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                do {
-                    try await storeKitService.syncEntitlements()
-                    RuntimeLogger.log(.purchase, "entitlements synced")
-                } catch {
-                    RuntimeLogger.log(.purchase, "entitlement sync failed: \(error.localizedDescription)", level: RuntimeLogger.Level.error)
-                }
-            }
             group.addTask {
                 do {
                     try await authService.refreshSession()

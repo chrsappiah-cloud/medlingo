@@ -15,11 +15,9 @@ struct AppBootstrapIntegrationTests {
     @Test func bootstrapper_liveType_completesWithoutCrash() async {
         let bootstrapper = LiveAppBootstrapper()
         let auth = AuthService(client: MockNetworkClient(), sessionStore: InMemorySessionStore())
-        let storeKit = StoreKitService(launchConfiguration: AppLaunchConfiguration(arguments: ["-UITesting"]))
 
         await bootstrapper.bootstrap(
             authService: auth,
-            storeKitService: storeKit,
             collectionStore: .shared,
             analyticsService: .shared,
             configuration: AppLaunchConfiguration(arguments: ["-UITesting"])

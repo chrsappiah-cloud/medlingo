@@ -54,7 +54,7 @@ struct ChapterDetailView: View {
                         .foregroundColor(AppColor.textPrimary)
                     HStack(spacing: AppSpacing.md) {
                         Label("\(chapter.estimatedMinutes) min", systemImage: "clock")
-                        Label(chapter.isPremium ? "Premium" : "Free", systemImage: chapter.isPremium ? "crown.fill" : "checkmark.seal.fill")
+                        Label("Free", systemImage: "checkmark.seal.fill")
                     }
                     .font(AppTypography.caption1)
                     .foregroundColor(AppColor.textSecondary)
@@ -238,7 +238,7 @@ struct GlossaryRow: View {
 #Preview {
     NavigationStack {
         ChapterDetailView(
-            chapter: Chapter(id: UUID(), number: 3, title: "Skeletal System", summary: "Bones, joints, and musculoskeletal conditions", estimatedMinutes: 75, isPremium: true, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .premium),
+            chapter: Chapter(id: UUID(), number: 3, title: "Skeletal System", summary: "Bones, joints, and musculoskeletal conditions", estimatedMinutes: 75, isPremium: false, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .free),
             colorIndex: 2
         )
     }
