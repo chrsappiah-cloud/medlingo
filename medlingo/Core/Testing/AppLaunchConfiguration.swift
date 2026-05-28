@@ -39,6 +39,8 @@ struct AppLaunchConfiguration: Sendable {
         arguments.contains("-mockAIGeneration") || (isUITestMode && seedsCreatorRole)
     }
     var skipsOnboarding: Bool { isUITestMode }
+    /// Presents Subscription paywall on launch for App Store IAP review screenshots.
+    var showsSubscriptionForReview: Bool { arguments.contains("-subscriptionReviewScreenshot") }
 
     public init(arguments: [String] = ProcessInfo.processInfo.arguments) {
         self.arguments = arguments

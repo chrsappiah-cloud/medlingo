@@ -95,6 +95,7 @@ struct AccountView: View {
                         .foregroundColor(AppColor.emerald)
                 }
             }
+            .accessibilityIdentifier("premium-plan-link")
             NavigationLink {
                 PurchaseHistoryView()
             } label: {

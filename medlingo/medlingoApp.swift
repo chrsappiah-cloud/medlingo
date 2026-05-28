@@ -24,14 +24,22 @@ struct medlingoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .environment(appState)
-                .environment(dataMiddleware)
-                .environment(router)
-                .task {
-                    RuntimeLogger.log(.lifecycle, "app launch")
-                    await appState.bootstrap()
+            Group {
+                if AppLaunchConfiguration.shared.showsSubscriptionForReview {
+                    NavigationStack {
+                        SubscriptionView()
+                    }
+                } else {
+                    MainTabView()
                 }
+            }
+            .environment(appState)
+            .environment(dataMiddleware)
+            .environment(router)
+            .task {
+                RuntimeLogger.log(.lifecycle, "app launch")
+                await appState.bootstrap()
+            }
         }
         .modelContainer(sharedModelContainer)
     }

@@ -3,10 +3,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUTPUT="${DISTRIBUTION_IAP_SCREENSHOT:-$ROOT/distribution/screenshots/iap/premium-paywall.png}"
+OUTPUT_DIR="${DISTRIBUTION_IAP_OUTPUT_DIR:-$ROOT/distribution/screenshots/iap}"
+OUTPUT="${DISTRIBUTION_IAP_SCREENSHOT:-$OUTPUT_DIR/premium-paywall.png}"
 SIM_NAME="${SIMULATOR_NAME:-iPhone 17 Pro Max}"
 
-mkdir -p "$(dirname "$OUTPUT")"
+mkdir -p "$OUTPUT_DIR"
 bash "$ROOT/scripts/select-xcode.sh"
 xcodebuild -downloadPlatform iOS >/dev/null 2>&1 || true
 
@@ -16,25 +17,16 @@ SIM_ID="$(xcrun simctl list devices available | grep "$SIM_NAME (" | head -1 | s
 xcrun simctl boot "$SIM_ID" 2>/dev/null || true
 xcrun simctl bootstatus "$SIM_ID" -b
 
-DERIVED="$ROOT/build/DerivedData-IAP-Screenshot"
-rm -rf "$DERIVED"
-
-echo "→ Building and launching for IAP screenshot…"
-xcodebuild build \
+export DISTRIBUTION_IAP_OUTPUT_DIR="$OUTPUT_DIR"
+xcodebuild test \
   -project "$ROOT/medlingo.xcodeproj" \
   -scheme medlingo \
   -destination "platform=iOS Simulator,id=$SIM_ID" \
-  -derivedDataPath "$DERIVED" \
-  CODE_SIGNING_ALLOWED=NO >/dev/null
+  -only-testing:medlingoUITests/IAPReviewScreenshotTests/testCaptureIAPReviewScreenshot \
+  CODE_SIGNING_ALLOWED=NO
 
-APP="$DERIVED/Build/Products/Debug-iphonesimulator/medlingo.app"
-xcrun simctl install "$SIM_ID" "$APP"
-xcrun simctl launch "$SIM_ID" wcs.medlingo || true
-sleep 4
-
-echo "→ Open Account → Premium Plan manually, then press Enter to capture…"
-read -r _
-
-xcrun simctl io "$SIM_ID" screenshot "$OUTPUT"
+if [[ ! -f "$OUTPUT" && -f /tmp/medlingo-iap-screenshots/premium-paywall.png ]]; then
+  cp /tmp/medlingo-iap-screenshots/premium-paywall.png "$OUTPUT"
+fi
+[[ -f "$OUTPUT" ]] || { echo "IAP screenshot missing at $OUTPUT" >&2; exit 1; }
 echo "Saved: $OUTPUT"
-echo "Upload this file to each IAP product in App Store Connect → App Review Screenshot."
