@@ -25,19 +25,9 @@ jobs:
         run: bash scripts/select-xcode.sh
 
       - name: Prepare simulator
-        run: |
-          xcodebuild -downloadPlatform iOS || true
-          RUNTIME_ID=$(xcrun simctl list runtimes available -j | python3 -c "
-          import json, sys
-          ios = [r for r in json.load(sys.stdin).get('runtimes', [])
-                 if r.get('isAvailable') and 'iOS' in r.get('name', '')]
-          ios.sort(key=lambda r: r['name'], reverse=True)
-          print(ios[0]['identifier'] if ios else '')
-          ")
-          SIM_ID=$(xcrun simctl create "CI Release iPhone" "com.apple.CoreSimulator.SimDeviceType.iPhone-16" "$RUNTIME_ID")
-          xcrun simctl boot "$SIM_ID"
-          xcrun simctl bootstatus "$SIM_ID" -b
-          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
+        env:
+          CI_SIM_NAME: CI Release iPhone
+        run: bash scripts/ci-prepare-simulator.sh
 
       - name: Run full test suite
         run: |
