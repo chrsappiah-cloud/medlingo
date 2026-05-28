@@ -29,6 +29,31 @@ xcrun altool --upload-app -f build/export/medlingo.ipa -t ios \
    - `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY`
 4. Manual trigger: **Actions → CD - Deploy to TestFlight → Run workflow**.
 
+## Automated App Review submission (IAP + screenshots)
+
+One command configures IAP products, review screenshots, and attaches the build:
+
+```bash
+cd /Applications/medlingo
+bash scripts/capture-iap-review-screenshot.sh   # Premium paywall for IAP review
+python3 scripts/app_store_submit.py --screenshot distribution/screenshots/iap/premium-paywall.png --skip-binary
+```
+
+Full pipeline (screenshot + TestFlight upload when distribution signing is configured):
+
+```bash
+ASC_ISSUER_ID=70c46c69-5d6d-438d-b300-31df2b93163a ASC_KEY_ID=4B8M4ZHLMF \
+  python3 scripts/app_store_submit.py
+```
+
+Then in **App Store Connect → Version 1.0**:
+1. Confirm build **202605271300** is selected
+2. Under **In-App Purchases**, include all five products (all should show **Ready to Submit**)
+3. Paste `docs/AppStoreResolutionCenterReply-2.1b.txt` in **Resolution Center**
+4. Click **Submit for Review**
+
+Product IDs and Connect resource IDs: `config/app_store_connect.json`
+
 ## App Store Connect submission
 
 | Field | Value |
