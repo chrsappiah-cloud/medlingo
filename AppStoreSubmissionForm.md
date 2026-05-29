@@ -2,7 +2,7 @@
 
 **Status:** Ready for resubmission (IAP-free)  
 **Version:** 1.0  
-**Build:** *(upload new build — increment from 202605271300)*  
+**Build:** 202605301200  
 **Bundle ID:** `wcs.medlingo`  
 **Submission ID:** 72a127f7-1a12-443c-964c-b11a5ba400e7  
 **Last updated:** 2026-05-30  
@@ -235,7 +235,7 @@ In Xcode / App Store Connect: **ITSAppUsesNonExemptEncryption = NO** (standard H
 | Field | Value |
 |-------|-------|
 | Version | 1.0 |
-| Build | *(new build after IAP removal)* |
+| Build | 202605301200 |
 | Copyright | © 2026 Christopher Appiah-Thompson |
 
 ---

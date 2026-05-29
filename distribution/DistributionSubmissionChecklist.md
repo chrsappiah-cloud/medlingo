@@ -1,7 +1,7 @@
 # Medlingo Distribution Submission Checklist
 
 **Date:** May 30, 2026  
-**Version:** 1.0 (new build — IAP removed)  
+**Version:** 1.0 (build 202605301200 — IAP removed)  
 **Submission ID:** 72a127f7-1a12-443c-964c-b11a5ba400e7  
 **Review date:** May 29, 2026  
 **Review device:** iPad Air 11-inch (M3), iPadOS 26.5  
@@ -19,7 +19,9 @@
 
 ## App Store Connect Actions
 
-- [ ] Upload new IPA via Xcode or Transporter (increment build number)
+- [x] Archive built: `build/export/medlingo.ipa` (build 202605301200)
+- [x] Device tests on iPhone 17 Pro Max: 209 unit + 5 integration + 9 critical E2E passed
+- [ ] Upload IPA via Transporter (`~/Desktop/medlingo-1.0-202605301200.ipa`)
 - [ ] Set Pricing to **Free** (no In-App Purchases)
 - [ ] Update **What's New** — IAP removed, all content free
 - [ ] Update **Description** — remove Premium / StoreKit references

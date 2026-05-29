@@ -5,7 +5,7 @@
 **Review date:** May 29, 2026  
 **Review device:** iPad Air 11-inch (M3), iPadOS 26.5  
 **Version reviewed:** 1.0 (202605271300)  
-**New build:** TBD (upload after IAP removal)
+**New build:** 1.0 (202605301200) — archived and ready for upload
 
 ---
 
@@ -58,7 +58,8 @@ See **`Medlingo-AppStoreReviewReply-May30-2026.txt`** on Desktop, or copy from `
 ## New Build Information
 
 - **Version:** 1.0
-- **Build number:** TBD (new archive to be uploaded)
+- **Build number:** 202605301200
+- **Device testing:** 209 unit + 5 integration + 9 critical E2E passed on iPhone 17 Pro Max (iOS 26.6)
 - **Xcode project:** medlingo.xcodeproj
 - **Scheme:** medlingo
 - **Deployment target:** iOS 18.0+

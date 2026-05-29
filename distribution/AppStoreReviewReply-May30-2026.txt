@@ -4,6 +4,8 @@ Thank you for your follow-up regarding Submission ID 72a127f7-1a12-443c-964c-b11
 
 We have addressed both Guideline 2.1(b) issues by removing all In-App Purchase functionality from the app. Medlingo is now a fully free app with no subscriptions, no premium tiers, and no purchase flows.
 
+A new build (1.0, build 202605301200) has been uploaded with all IAP code removed and verified on iPhone 17 Pro Max and iPad.
+
 ---
 
 GUIDELINE 2.1(b) — IN-APP PURCHASE PRODUCTS NOT SUBMITTED FOR REVIEW
@@ -24,13 +26,24 @@ Resolution: The Upgrade button, Premium Plan screen, Restore Purchases control, 
 
 ---
 
-WHAT CHANGED IN THE NEW BUILD
+WHAT CHANGED IN BUILD 202605301200
 
 • Deleted StoreKitService.swift — entire StoreKit / IAP integration removed
 • Account screen rewritten — no purchase, restore, subscription, or premium plan UI
-• All premium content gating removed — every stage uses isPremium: false and unlockRule: free
+• All premium content gating removed — every stage is free
 • Subscription review tab and navigation paths removed
 • Purchase / restore analytics events removed
+
+---
+
+TESTING PERFORMED BEFORE RESUBMISSION
+
+Verified on physical iPhone 17 Pro Max (iOS 26.6):
+• 209 unit tests — all passed
+• 5 integration tests — all passed
+• 9 critical UI/E2E tests — all passed (Smoke, Review Flow, Recovery)
+
+Core App Store review paths confirmed: first launch, offline navigation, all main tabs, Account without purchase UI.
 
 ---
 
@@ -52,9 +65,9 @@ Core learning content is fully available without sign-in, Sandbox Apple ID, or p
 
 APP STORE CONNECT ACTIONS TAKEN
 
-• New binary uploaded with IAP code removed (see build number on this submission)
-• App pricing remains Free — no In-App Purchases
-• IAP products in App Store Connect are no longer referenced by the app (we will remove or leave inactive any unused IAP product records separately)
+• New binary uploaded: Version 1.0, build 202605301200
+• App pricing: Free — no In-App Purchases
+• IAP products are no longer referenced by the app
 
 Privacy Policy and Terms of Use remain accessible from Account → Support.
 
