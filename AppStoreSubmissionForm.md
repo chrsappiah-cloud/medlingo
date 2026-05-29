@@ -1,9 +1,11 @@
 # Medlingo — App Store Connect Submission Form
 
-**Status:** Ready for resubmission  
-**Version:** 1.0 (Build 202605271300)  
+**Status:** Ready for resubmission (IAP-free)  
+**Version:** 1.0  
+**Build:** *(upload new build — increment from 202605271300)*  
 **Bundle ID:** `wcs.medlingo`  
-**Last updated:** 2026-05-27
+**Submission ID:** 72a127f7-1a12-443c-964c-b11a5ba400e7  
+**Last updated:** 2026-05-30  
 
 Use this document to complete App Store Connect. Copy each section into the matching field.
 
@@ -29,15 +31,20 @@ Use this document to complete App Store Connect. Copy each section into the matc
 
 | Field | Value |
 |-------|-------|
-| Price | Free (with In-App Purchases) |
-| Availability | All territories (or restrict per your business policy) |
+| Price | **Free** |
+| In-App Purchases | **None** — app has no IAP |
 
 ---
 
 ## 3. Version 1.0 — What's New
 
 ```
-Initial release — Structured medical terminology stages, interactive Practice Lab (flashcards, word builder, labeling, quizzes), Collection gallery for study visuals, tutor session discovery, and StoreKit 2 Premium subscriptions. Polished diamond-and-gold UI with performance tuned to top-tier education apps.
+Resubmission — All content is now completely free.
+
+• Removed all In-App Purchases and subscription flows
+• All 15 study stages and Practice Lab modes available at no cost
+• Account screen simplified — no premium plans or upgrade buttons
+• Bug fixes and stability improvements for iPad and iPhone
 ```
 
 ---
@@ -67,7 +74,7 @@ KEY FEATURES
 
 • Progress Dashboard — Track XP, mastery, streaks, and stage completion
 
-• Premium Subscription — Unlock all stages and practice modes via StoreKit 2 (monthly/yearly)
+• Completely Free — All stages and practice modes included at no cost
 
 • Offline-Friendly Demo — Core curriculum loads without sign-in for study anywhere
 
@@ -116,7 +123,7 @@ Upload from `distribution/screenshots/6.7-inch/` in this order:
 
 ## 9. App Preview (optional)
 
-Not required for initial submission. Add later if you produce a 15–30s screen recording on the same 6.7" device.
+Not required for initial submission.
 
 ---
 
@@ -135,11 +142,9 @@ Not required for initial submission. Add later if you produce a 15–30s screen 
 ### Notes (paste full block)
 
 ```
-RESUBMISSION NOTES — Guideline 2.1(a) fix applied in build 202605271300:
-The Upgrade button on the Subscription page now properly responds with a loading
-indicator, initiates the StoreKit purchase sheet, and displays error alerts if
-the purchase cannot be completed. All errors in the async purchase chain are
-now surfaced to the user.
+RESUBMISSION — IAP REMOVED (Submission ID 72a127f7-1a12-443c-964c-b11a5ba400e7)
+
+We have removed ALL In-App Purchase functionality from this build. The app no longer contains premium plans, subscription screens, Upgrade buttons, Restore Purchases, or any StoreKit integration. All content is free.
 
 Demo account: Not required. The app runs fully in learner mode without sign-in. All core study flows use built-in sample curriculum.
 
@@ -150,7 +155,9 @@ HOW TO TEST
 4. Collection tab — demo educational artwork gallery.
 5. Sessions tab — tutor discovery and booking UI.
 6. Progress tab — XP, mastery, 7-day streak, stage analytics.
-7. Account tab — may appear under More on compact devices; profile and Premium Plan.
+7. Account tab — profile, preferences, help, privacy links only. No Premium Plan or purchase UI.
+
+iPad: All tabs visible in tab bar. Account has no subscription or upgrade controls.
 
 AI & NETWORK
 - Without API keys, app uses demo mode: sample chapters, local collection, no external AI charges during review.
@@ -158,8 +165,7 @@ AI & NETWORK
 - Video sessions use AVKit; UI verifiable without joining a live room.
 
 IN-APP PURCHASES
-- StoreKit 2: com.medlingo.premium.monthly, com.medlingo.premium.yearly, session packs, chapter unlock.
-- Test with Sandbox Apple ID. Restore via Account → Restore Purchases.
+- None. This app has no In-App Purchases. No Sandbox Apple ID is needed.
 
 PUSH NOTIFICATIONS
 - Study reminders and session updates; permission requested in context, not at launch.
@@ -176,11 +182,12 @@ Christopher Appiah-Thompson — christopher.appiahthompson@myworldclass.org
 ## 11. App Privacy (summary for questionnaire)
 
 | Data type | Collected | Linked to user | Used for |
-|-----------|-----------|--------------|----------|
+|-----------|-----------|----------------|----------|
 | Email | Optional (sign-in) | Yes | Account |
-| Purchase history | Yes | Yes | App functionality |
 | Product interaction | Yes | Yes | Analytics (first-party) |
 | Crash data | Optional | No | App functionality |
+
+**Purchase history:** Not collected (no IAP in app)
 
 **Tracking:** No — we do not track users across apps/websites owned by other companies.
 
@@ -217,17 +224,9 @@ In Xcode / App Store Connect: **ITSAppUsesNonExemptEncryption = NO** (standard H
 
 ---
 
-## 14. In-App Purchases (reference)
+## 14. In-App Purchases
 
-| Product ID | Type | Display name (suggested) |
-|------------|------|--------------------------|
-| com.medlingo.premium.monthly | Auto-renewable | Premium Monthly |
-| com.medlingo.premium.yearly | Auto-renewable | Premium Yearly |
-| com.medlingo.sessions.5pack | Consumable | 5 Session Pack |
-| com.medlingo.sessions.10pack | Consumable | 10 Session Pack |
-| com.medlingo.chapter.unlock | Non-consumable | Chapter Unlock |
-
-Ensure each product is **Ready to Submit** with localized display name and description in App Store Connect.
+**None.** Do not attach IAP products to this version.
 
 ---
 
@@ -236,7 +235,7 @@ Ensure each product is **Ready to Submit** with localized display name and descr
 | Field | Value |
 |-------|-------|
 | Version | 1.0 |
-| Build | 202605271300 (uploaded to App Store Connect) |
+| Build | *(new build after IAP removal)* |
 | Copyright | © 2026 Christopher Appiah-Thompson |
 
 ---
@@ -249,12 +248,14 @@ Ensure each product is **Ready to Submit** with localized display name and descr
 - [ ] Screenshots uploaded (6.7" — min. 3)
 - [ ] App icon 1024×1024 uploaded
 - [ ] Privacy Policy URL live
-- [ ] IAP products configured and reviewed
+- [ ] Pricing set to **Free** (no IAP)
+- [ ] Description and What's New updated (no subscription references)
 - [ ] App Review Notes pasted (Section 10)
+- [ ] Resolution Center reply pasted (see Desktop or `distribution/AppStoreResponse_iap-removed.md`)
 - [ ] Submit for Review
 
 ---
 
 ## 17. Review response templates
 
-See **`AppStoreReviewNotes.md`** → *Review Response Templates* for copy-paste replies to common App Review questions (AI generation, medical disclaimer, data collection, subscriptions).
+See **`distribution/AppStoreResponse_iap-removed.md`** and Desktop **`Medlingo-AppStoreReviewReply-May30-2026.txt`** for the Resolution Center reply addressing Guideline 2.1(b) IAP issues.
