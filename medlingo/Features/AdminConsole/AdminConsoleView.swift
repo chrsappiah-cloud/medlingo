@@ -89,8 +89,8 @@ struct AdminConsoleView: View {
             SectionHeader(title: "Overview")
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppSpacing.sm) {
                 AdminMetricCard(title: "Active Learners", value: "1,284", trend: "+12%", icon: "person.3.fill", color: AppColor.diamond)
-                AdminMetricCard(title: "Revenue (MTD)", value: "$8,450", trend: "+8%", icon: "dollarsign.circle.fill", color: AppColor.success)
-                AdminMetricCard(title: "Active Subscriptions", value: "856", trend: "+5%", icon: "creditcard.fill", color: AppColor.diamondDeep)
+                AdminMetricCard(title: "Lessons Completed", value: "12,450", trend: "+8%", icon: "book.fill", color: AppColor.success)
+                AdminMetricCard(title: "Study Streaks", value: "856", trend: "+5%", icon: "flame.fill", color: AppColor.diamondDeep)
                 AdminMetricCard(title: "Sessions This Week", value: "47", trend: "+15%", icon: "video.fill", color: AppColor.emerald)
             }
         }
@@ -103,7 +103,7 @@ struct AdminConsoleView: View {
                 AdminActionButton(icon: "person.badge.plus", title: "Users", color: .blue)
                 AdminActionButton(icon: "checkmark.shield.fill", title: "Approvals", color: .green)
                 AdminActionButton(icon: "book.fill", title: "Content", color: .purple)
-                AdminActionButton(icon: "creditcard.fill", title: "Payments", color: .orange)
+                AdminActionButton(icon: "chart.bar.fill", title: "Analytics", color: .orange)
                 AdminActionButton(icon: "flag.fill", title: "Reports", color: .red)
                 AdminActionButton(icon: "gearshape.fill", title: "Settings", color: .gray)
             }
@@ -116,9 +116,9 @@ struct AdminConsoleView: View {
 
             VStack(spacing: AppSpacing.xs) {
                 AdminActivityRow(icon: "person.fill.checkmark", text: "New tutor verified: James Chen", time: "2m ago", color: .green)
-                AdminActivityRow(icon: "creditcard.fill", text: "Refund processed: $9.99", time: "15m ago", color: .orange)
-                AdminActivityRow(icon: "exclamationmark.triangle.fill", text: "Payment failed: user #4521", time: "1h ago", color: .red)
-                AdminActivityRow(icon: "book.fill", text: "Chapter 8 published", time: "3h ago", color: .blue)
+                AdminActivityRow(icon: "book.fill", text: "Chapter 8 published", time: "15m ago", color: .blue)
+                AdminActivityRow(icon: "star.fill", text: "New learner milestone: 100-day streak", time: "1h ago", color: .orange)
+                AdminActivityRow(icon: "video.fill", text: "Tutor session completed: Cardiology", time: "3h ago", color: .green)
             }
         }
     }

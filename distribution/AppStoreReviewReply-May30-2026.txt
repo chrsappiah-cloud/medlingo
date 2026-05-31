@@ -1,0 +1,78 @@
+Hello App Review,
+
+Thank you for your follow-up regarding Submission ID 72a127f7-1a12-443c-964c-b11a5ba400e7 (Version 1.0, build 202605271300), reviewed on May 29, 2026 on iPad Air 11-inch (M3), iPadOS 26.5.
+
+We have addressed both Guideline 2.1(b) issues by removing all In-App Purchase functionality from the app. Medlingo is now a fully free app with no subscriptions, no premium tiers, and no purchase flows.
+
+A new build (1.0, build 202605301200) has been uploaded with all IAP code removed and verified on iPhone 17 Pro Max and iPad.
+
+---
+
+GUIDELINE 2.1(b) — IN-APP PURCHASE PRODUCTS NOT SUBMITTED FOR REVIEW
+
+The previous build referenced premium subscription plans in the Account screen, but those IAP products were not submitted for review in App Store Connect.
+
+Resolution: We have removed ALL In-App Purchase functionality from the app. The app no longer references monthly plans, yearly plans, premium subscriptions, or any other purchase products. All 15 study stages, Practice Lab modes, Collection, Sessions, and Progress features are completely free with no paywall.
+
+We are not submitting In-App Purchase products with this resubmission because the app no longer contains any purchase functionality.
+
+---
+
+GUIDELINE 2.1(b) — UPGRADE BUTTON ERROR
+
+The previous build displayed an error when tapping the "Upgrade" button on the subscription screen.
+
+Resolution: The Upgrade button, Premium Plan screen, Restore Purchases control, and entire StoreKit purchase layer have been completely removed. There is no upgrade path anywhere in the application. Reviewers will not encounter purchase UI or purchase errors.
+
+---
+
+WHAT CHANGED IN BUILD 202605301200
+
+• Deleted StoreKitService.swift — entire StoreKit / IAP integration removed
+• Account screen rewritten — no purchase, restore, subscription, or premium plan UI
+• All premium content gating removed — every stage is free
+• Subscription review tab and navigation paths removed
+• Purchase / restore analytics events removed
+
+---
+
+TESTING PERFORMED BEFORE RESUBMISSION
+
+Verified on physical iPhone 17 Pro Max (iOS 26.6):
+• 209 unit tests — all passed
+• 5 integration tests — all passed
+• 9 critical UI/E2E tests — all passed (Smoke, Review Flow, Recovery)
+
+Core App Store review paths confirmed: first launch, offline navigation, all main tabs, Account without purchase UI.
+
+---
+
+HOW TO TEST (NO SIGN-IN OR PURCHASE REQUIRED)
+
+1. Launch the app — Learn tab shows streak, XP, and Continue Learning.
+2. Tap Resume — opens Stage 3 (Skeletal System) with lessons and practice.
+3. Practice tab — Flashcards, Word Builder, Labeling, Quizzes, Case Studies.
+4. Collection tab — educational artwork gallery.
+5. Sessions tab — tutor discovery and booking UI.
+6. Progress tab — XP, mastery, streaks, and stage analytics.
+7. Account tab — profile, preferences, help, and privacy links only (no subscription or purchase section).
+
+On iPad: all tabs are accessible from the tab bar. Account no longer contains any Premium Plan or Upgrade controls.
+
+Core learning content is fully available without sign-in, Sandbox Apple ID, or purchase.
+
+---
+
+APP STORE CONNECT ACTIONS TAKEN
+
+• New binary uploaded: Version 1.0, build 202605301200
+• App pricing: Free — no In-App Purchases
+• IAP products are no longer referenced by the app
+
+Privacy Policy and Terms of Use remain accessible from Account → Support.
+
+Please let us know if you need any additional information.
+
+Best regards,
+Christopher Appiah-Thompson
+christopher.appiahthompson@myworldclass.org

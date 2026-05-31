@@ -24,7 +24,7 @@ final class SyncCoordinator {
         case idle, syncing, error, offline
     }
 
-    private init() {}
+    init() {}
 
     // MARK: - Full Sync
 

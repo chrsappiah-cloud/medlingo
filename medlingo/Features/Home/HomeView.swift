@@ -55,8 +55,6 @@ struct HomeView: View {
             Text("Joining session...")
         case .messages:
             MessagingView(recipientID: UUID(), recipientName: "Tutor")
-        case .subscription:
-            Text("Subscription")
         case .settings:
             Text("Settings")
         case .adminConsole:
@@ -222,7 +220,7 @@ final class HomeViewModel {
     var overallMastery: Double = 0.72
 
     var currentStage: Chapter {
-        chapters.first(where: { $0.number == 3 }) ?? chapters.first ?? Chapter(id: UUID(), number: 3, title: "Skeletal System", summary: "Bones, joints, and conditions", estimatedMinutes: 75, isPremium: true, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .premium)
+        chapters.first(where: { $0.number == 3 }) ?? chapters.first ?? Chapter(id: UUID(), number: 3, title: "Skeletal System", summary: "Bones, joints, and conditions", estimatedMinutes: 75, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .free)
     }
 
     init() {
@@ -231,11 +229,11 @@ final class HomeViewModel {
 
     private func loadSampleStages() {
         chapters = [
-            Chapter(id: UUID(), number: 1, title: "Foundations", summary: "Word parts", estimatedMinutes: 45, isPremium: false, coverArtURL: nil, accentColorHex: "B9F2FF", prerequisiteIDs: [], unlockRule: .free),
-            Chapter(id: UUID(), number: 2, title: "Body Org.", summary: "Orientation", estimatedMinutes: 50, isPremium: false, coverArtURL: nil, accentColorHex: "D4AF37", prerequisiteIDs: [], unlockRule: .sequential),
-            Chapter(id: UUID(), number: 3, title: "Skeletal", summary: "Bones", estimatedMinutes: 75, isPremium: true, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .premium),
-            Chapter(id: UUID(), number: 4, title: "Muscular", summary: "Muscles", estimatedMinutes: 60, isPremium: true, coverArtURL: nil, accentColorHex: "E6E6FA", prerequisiteIDs: [], unlockRule: .premium),
-            Chapter(id: UUID(), number: 5, title: "Nervous", summary: "Nerves", estimatedMinutes: 90, isPremium: true, coverArtURL: nil, accentColorHex: "FF6B9D", prerequisiteIDs: [], unlockRule: .premium),
+            Chapter(id: UUID(), number: 1, title: "Foundations", summary: "Word parts", estimatedMinutes: 45, coverArtURL: nil, accentColorHex: "B9F2FF", prerequisiteIDs: [], unlockRule: .free),
+            Chapter(id: UUID(), number: 2, title: "Body Org.", summary: "Orientation", estimatedMinutes: 50, coverArtURL: nil, accentColorHex: "D4AF37", prerequisiteIDs: [], unlockRule: .sequential),
+            Chapter(id: UUID(), number: 3, title: "Skeletal", summary: "Bones", estimatedMinutes: 75, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .free),
+            Chapter(id: UUID(), number: 4, title: "Muscular", summary: "Muscles", estimatedMinutes: 60, coverArtURL: nil, accentColorHex: "E6E6FA", prerequisiteIDs: [], unlockRule: .free),
+            Chapter(id: UUID(), number: 5, title: "Nervous", summary: "Nerves", estimatedMinutes: 90, coverArtURL: nil, accentColorHex: "FF6B9D", prerequisiteIDs: [], unlockRule: .free),
         ]
     }
 }

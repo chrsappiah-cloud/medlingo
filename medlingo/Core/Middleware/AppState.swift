@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import StoreKit
 
 @MainActor
 @Observable
@@ -13,7 +12,6 @@ final class AppState {
 
     // Services
     let authService: AuthService
-    let storeKitService = StoreKitService()
     let analyticsService = AnalyticsService.shared
     let chapterService = ChapterService()
     let cloudKitSync = CloudKitSyncService()
@@ -26,7 +24,6 @@ final class AppState {
     var isOnboardingComplete = true
     var currentUserRole: AppUser.UserRole = .learner
     var isUITesting: Bool { launchConfiguration.isUITestMode }
-    var isPremium: Bool { !storeKitService.purchasedProductIDs.isEmpty }
     var currentUserID: UUID?
 
     var isCreatorRole: Bool {
@@ -59,28 +56,9 @@ final class AppState {
     func bootstrap() async {
         await bootstrapper.bootstrap(
             authService: authService,
-            storeKitService: storeKitService,
             collectionStore: collectionStore,
             analyticsService: analyticsService,
             configuration: launchConfiguration
         )
-    }
-
-    func handlePurchase(productID: String) async throws -> PurchaseResult {
-        guard let product = storeKitService.availableProducts.first(where: { $0.id == productID }) else {
-            throw StoreError.productNotFound(productID: productID)
-        }
-        analyticsService.track(.purchaseInitiated(productID: productID))
-        let result = try await storeKitService.purchase(product)
-        switch result {
-        case .success(let txID):
-            analyticsService.track(.purchaseCompleted(productID: productID, revenue: product.price))
-            _ = txID
-        case .failed(let error):
-            analyticsService.track(.purchaseFailed(productID: productID, reason: error.localizedDescription))
-        default:
-            break
-        }
-        return result
     }
 }

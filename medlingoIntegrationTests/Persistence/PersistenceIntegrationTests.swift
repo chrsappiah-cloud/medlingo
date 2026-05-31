@@ -19,7 +19,6 @@ struct PersistenceIntegrationTests {
             title: "Integration Stage",
             summary: "Test",
             estimatedMinutes: 40,
-            isPremium: false,
             coverArtURL: nil,
             accentColorHex: "3498DB",
             prerequisiteIDs: [],

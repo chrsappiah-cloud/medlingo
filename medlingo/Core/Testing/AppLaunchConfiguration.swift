@@ -15,14 +15,6 @@ struct AppLaunchConfiguration: Sendable {
             || arguments.contains("-mockNetworkOffline")
     }
 
-    var storeKitScenario: StoreKitTestScenario? {
-        if arguments.contains("-mockStoreKit") {
-            let value = nextValue(after: "-mockStoreKit") ?? "productsFailure"
-            return StoreKitTestScenario(rawValue: value) ?? .productsFailure
-        }
-        return nil
-    }
-
     var permissionScenario: PermissionScenario? {
         if arguments.contains("-mockPermissions") {
             let value = nextValue(after: "-mockPermissions") ?? "deniedMicrophone"
@@ -39,8 +31,6 @@ struct AppLaunchConfiguration: Sendable {
         arguments.contains("-mockAIGeneration") || (isUITestMode && seedsCreatorRole)
     }
     var skipsOnboarding: Bool { isUITestMode }
-    /// Presents Subscription paywall on launch for App Store IAP review screenshots.
-    var showsSubscriptionForReview: Bool { arguments.contains("-subscriptionReviewScreenshot") }
 
     public init(arguments: [String] = ProcessInfo.processInfo.arguments) {
         self.arguments = arguments
@@ -52,17 +42,6 @@ struct AppLaunchConfiguration: Sendable {
         }
         return arguments[index + 1]
     }
-}
-
-enum StoreKitTestScenario: String, Sendable {
-    case productsSuccess
-    case productsFailure
-    case purchaseCancelled
-    case purchaseSuccess
-    case purchasePending
-    case restoreSuccess
-    case restoreEmpty
-    case offline
 }
 
 enum PermissionScenario: String, Sendable {

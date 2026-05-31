@@ -24,15 +24,7 @@ struct medlingoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
-                if AppLaunchConfiguration.shared.showsSubscriptionForReview {
-                    NavigationStack {
-                        SubscriptionView()
-                    }
-                } else {
-                    MainTabView()
-                }
-            }
+            MainTabView()
             .environment(appState)
             .environment(dataMiddleware)
             .environment(router)

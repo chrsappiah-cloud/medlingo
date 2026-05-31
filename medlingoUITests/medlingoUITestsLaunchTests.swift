@@ -24,6 +24,9 @@ final class medlingoUITestsLaunchTests: XCTestCase {
 
     @MainActor
     func testLaunchPerformance() throws {
+        #if !targetEnvironment(simulator)
+        throw XCTSkip("Launch performance baselines are measured on simulator only")
+        #else
         // Top-tier iOS apps target <2.5s cold launch on simulator (99th percentile).
         let app = XCUIApplication()
         app.launchArguments = UITestLaunchArguments.standardSmoke()
@@ -37,5 +40,6 @@ final class medlingoUITestsLaunchTests: XCTestCase {
             app.launch()
             stopMeasuring()
         }
+        #endif
     }
 }

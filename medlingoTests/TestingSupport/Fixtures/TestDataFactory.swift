@@ -31,16 +31,4 @@ enum TestDataFactory {
             user: user ?? TestDataFactory.user()
         )
     }
-
-    static func entitlement(expired: Bool = false) -> Entitlement {
-        Entitlement(
-            id: UUID(),
-            userID: UUID(),
-            productID: "com.medlingo.premium.monthly",
-            status: .active,
-            expiresAt: expired ? Date().addingTimeInterval(-86_400) : Date().addingTimeInterval(86_400 * 30),
-            grantedAt: Date(),
-            source: .applePurchase
-        )
-    }
 }
