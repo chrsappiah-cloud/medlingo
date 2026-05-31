@@ -158,7 +158,6 @@ final class ChapterListViewModel {
                 title: data.0,
                 summary: data.1,
                 estimatedMinutes: Int.random(in: 45...90),
-                isPremium: false,
                 coverArtURL: nil,
                 accentColorHex: "",
                 prerequisiteIDs: [],

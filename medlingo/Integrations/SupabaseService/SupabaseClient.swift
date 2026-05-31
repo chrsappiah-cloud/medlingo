@@ -19,12 +19,6 @@ protocol SessionServiceProtocol {
     func createRoomToken(sessionID: UUID) async throws -> (url: URL, token: String)
 }
 
-protocol EntitlementServiceProtocol {
-    func fetchEntitlements(for userID: UUID) async throws -> [Entitlement]
-    func verifyPurchase(transactionID: String, productID: String, userID: UUID, signedPayload: String) async throws -> Entitlement
-    func overrideEntitlement(userID: UUID, productID: String, status: Entitlement.EntitlementStatus) async throws
-}
-
 protocol MessagingServiceProtocol {
     func fetchMessages(for userID: UUID) async throws -> [ChatMessage]
     func sendMessage(from senderID: UUID, to recipientID: UUID, content: String) async throws -> ChatMessage

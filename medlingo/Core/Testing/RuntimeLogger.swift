@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-/// ARC Shield Runtime Probe — structured logging for launch, auth, network, purchases, and migrations.
+/// ARC Shield Runtime Probe — structured logging for launch, auth, network, and migrations.
 enum RuntimeLogger {
     enum Category: String {
         case lifecycle = "app.lifecycle"

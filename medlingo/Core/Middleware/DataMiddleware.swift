@@ -9,7 +9,6 @@ final class DataMiddleware {
     private(set) var lessons: [UUID: [Lesson]] = [:]
     private(set) var exercises: [UUID: [Exercise]] = [:]
     private(set) var progress: [UUID: Double] = [:]
-    private(set) var entitlements: [Entitlement] = []
     private(set) var sessions: [TutorSession] = []
     private(set) var bookings: [Booking] = []
     private(set) var messages: [ChatMessage] = []
@@ -21,7 +20,6 @@ final class DataMiddleware {
     private let analyticsService: AnalyticsServiceProtocol
     private let progressService: ProgressServiceProtocol
     private let sessionService: SessionServiceProtocol
-    private let entitlementService: EntitlementServiceProtocol
     private let messagingService: MessagingServiceProtocol
     var isRemoteConfigured: Bool
 
@@ -30,7 +28,6 @@ final class DataMiddleware {
         analyticsService: AnalyticsServiceProtocol? = nil,
         progressService: ProgressServiceProtocol? = nil,
         sessionService: SessionServiceProtocol? = nil,
-        entitlementService: EntitlementServiceProtocol? = nil,
         messagingService: MessagingServiceProtocol? = nil,
         isRemoteConfigured: Bool? = nil,
         skipInitialLoad: Bool = false
@@ -39,7 +36,6 @@ final class DataMiddleware {
         self.analyticsService = analyticsService ?? AnalyticsService.shared
         self.progressService = progressService ?? ProgressService()
         self.sessionService = sessionService ?? SessionService()
-        self.entitlementService = entitlementService ?? EntitlementService()
         self.messagingService = messagingService ?? MessagingService()
         self.isRemoteConfigured = isRemoteConfigured ?? SupabaseManager.shared.isConfigured
         if !skipInitialLoad {
@@ -193,13 +189,6 @@ final class DataMiddleware {
         }
     }
 
-    func loadEntitlements() async {
-        guard let userID = AppState.shared.currentUserID else { return }
-        do {
-            entitlements = try await entitlementService.fetchEntitlements(for: userID)
-        } catch {}
-    }
-
     func isStageUnlocked(_ chapter: Chapter) -> Bool {
         true
     }
@@ -225,7 +214,7 @@ final class DataMiddleware {
             ("Clinical Applications", "Cross-system review"),
         ]
         return stages.enumerated().map { index, data in
-            Chapter(id: UUID(), number: index + 1, title: data.0, summary: data.1, estimatedMinutes: Int.random(in: 45...90), isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
+            Chapter(id: UUID(), number: index + 1, title: data.0, summary: data.1, estimatedMinutes: Int.random(in: 45...90), coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
         }
     }
 
@@ -248,7 +237,6 @@ final class DataMiddleware {
         lessons = [:]
         exercises = [:]
         progress = [:]
-        entitlements = []
         sessions = []
         bookings = []
         messages = []

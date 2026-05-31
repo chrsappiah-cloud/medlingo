@@ -6,7 +6,6 @@ struct Chapter: Identifiable, Codable, Hashable {
     let title: String
     let summary: String
     let estimatedMinutes: Int
-    let isPremium: Bool
     let coverArtURL: URL?
     let accentColorHex: String
     let prerequisiteIDs: [UUID]
@@ -15,7 +14,6 @@ struct Chapter: Identifiable, Codable, Hashable {
     enum UnlockRule: String, Codable, Hashable {
         case free
         case sequential
-        case premium
         case institutional
     }
 }

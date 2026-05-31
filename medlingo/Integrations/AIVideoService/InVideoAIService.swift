@@ -269,7 +269,7 @@ enum InVideoAIError: Error, LocalizedError {
         case .timeout: return "Generation timed out. Try a simpler prompt or image mode."
         case .invalidPrompt: return "Please provide a valid prompt."
         case .modelUnavailable: return "Selected model is currently unavailable."
-        case .quotaExceeded: return "Generation quota exceeded. Upgrade to continue."
+        case .quotaExceeded: return "Generation quota exceeded. Try again later."
         }
     }
 }

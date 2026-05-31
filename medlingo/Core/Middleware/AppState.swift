@@ -24,7 +24,6 @@ final class AppState {
     var isOnboardingComplete = true
     var currentUserRole: AppUser.UserRole = .learner
     var isUITesting: Bool { launchConfiguration.isUITestMode }
-    var isPremium: Bool { true }
     var currentUserID: UUID?
 
     var isCreatorRole: Bool {

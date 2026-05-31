@@ -86,8 +86,8 @@ struct AnalyticsServiceBehaviorTests {
     }
 
     @Test func screenViewed_propertiesIncludeScreenName() {
-        let event = AnalyticsEvent.screenViewed(name: "Subscription")
-        #expect(event.properties["screen_name"] == "Subscription")
+        let event = AnalyticsEvent.screenViewed(name: "Account")
+        #expect(event.properties["screen_name"] == "Account")
     }
 
     @Test func lessonCompleted_propertiesIncludeDuration() {

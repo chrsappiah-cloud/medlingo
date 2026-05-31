@@ -39,7 +39,7 @@ struct HomeViewModelTests {
     @Test func currentStage_whenNoChapter3_exists_fallsBackToFirst() {
         let vm = HomeViewModel()
         vm.chapters = [
-            Chapter(id: UUID(), number: 10, title: "Ten", summary: "", estimatedMinutes: 10, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free),
+            Chapter(id: UUID(), number: 10, title: "Ten", summary: "", estimatedMinutes: 10, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free),
         ]
         #expect(vm.currentStage.number == 10)
     }
@@ -51,9 +51,9 @@ struct HomeViewModelTests {
         #expect(vm.currentStage.title == "Skeletal System")
     }
 
-    @Test func chapters_areNotPremium() {
+    @Test func chapters_useFreeUnlockRules() {
         for chapter in sut.chapters {
-            #expect(chapter.isPremium == false)
+            #expect(chapter.unlockRule == .free || chapter.unlockRule == .sequential)
         }
     }
 }

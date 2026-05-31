@@ -8,7 +8,6 @@ struct DataMiddlewareTests {
     let analyticsSpy: AnalyticsTrackerSpy
     let progressMock: ProgressServiceMock
     let sessionMock: SessionServiceMock
-    let entitlementMock: EntitlementServiceMock
     let messagingMock: MessagingServiceMock
     var sut: DataMiddleware
 
@@ -17,7 +16,6 @@ struct DataMiddlewareTests {
         analyticsSpy = AnalyticsTrackerSpy()
         progressMock = ProgressServiceMock()
         sessionMock = SessionServiceMock()
-        entitlementMock = EntitlementServiceMock()
         messagingMock = MessagingServiceMock()
 
         sut = DataMiddleware(
@@ -25,7 +23,6 @@ struct DataMiddlewareTests {
             analyticsService: analyticsSpy,
             progressService: progressMock,
             sessionService: sessionMock,
-            entitlementService: entitlementMock,
             messagingService: messagingMock,
             skipInitialLoad: true
         )
@@ -40,10 +37,9 @@ struct DataMiddlewareTests {
         #expect(chapters.last?.number == 15)
     }
 
-    @Test func sampleChapters_allChaptersAreNotPremium() {
+    @Test func sampleChapters_allChaptersAreFree() {
         let chapters = DataMiddleware.sampleChapters()
         for chapter in chapters {
-            #expect(chapter.isPremium == false)
             #expect(chapter.unlockRule == .free)
         }
     }
@@ -91,11 +87,11 @@ struct DataMiddlewareTests {
     // MARK: - isStageUnlocked
 
     @Test func isStageUnlocked_alwaysReturnsTrue() {
-        let freeChapter = Chapter(id: UUID(), number: 1, title: "Test", summary: "", estimatedMinutes: 10, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
-        let premiumChapter = Chapter(id: UUID(), number: 5, title: "Premium", summary: "", estimatedMinutes: 10, isPremium: true, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .premium)
+        let freeChapter = Chapter(id: UUID(), number: 1, title: "Test", summary: "", estimatedMinutes: 10, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
+        let sequentialChapter = Chapter(id: UUID(), number: 5, title: "Later Stage", summary: "", estimatedMinutes: 10, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .sequential)
 
         #expect(sut.isStageUnlocked(freeChapter) == true)
-        #expect(sut.isStageUnlocked(premiumChapter) == true)
+        #expect(sut.isStageUnlocked(sequentialChapter) == true)
     }
 
     // MARK: - loadInitialData (with mocks)

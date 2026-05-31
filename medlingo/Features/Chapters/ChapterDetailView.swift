@@ -238,7 +238,7 @@ struct GlossaryRow: View {
 #Preview {
     NavigationStack {
         ChapterDetailView(
-            chapter: Chapter(id: UUID(), number: 3, title: "Skeletal System", summary: "Bones, joints, and musculoskeletal conditions", estimatedMinutes: 75, isPremium: false, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .free),
+            chapter: Chapter(id: UUID(), number: 3, title: "Skeletal System", summary: "Bones, joints, and musculoskeletal conditions", estimatedMinutes: 75, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .free),
             colorIndex: 2
         )
     }

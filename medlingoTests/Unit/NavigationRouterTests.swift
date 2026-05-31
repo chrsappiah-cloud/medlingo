@@ -11,7 +11,7 @@ struct NavigationRouterTests {
     }
 
     @Test func navigateToLearn_appendsDestination() {
-        let chapter = Chapter(id: UUID(), number: 1, title: "Test", summary: "", estimatedMinutes: 10, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
+        let chapter = Chapter(id: UUID(), number: 1, title: "Test", summary: "", estimatedMinutes: 10, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
         sut.navigateToLearn(.stageDetail(chapter: chapter, colorIndex: 0))
 
         #expect(sut.learnPath.count == 1)

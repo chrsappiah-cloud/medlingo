@@ -19,16 +19,36 @@ from app_store_submit import ASCClient, API_V1, DEFAULT_APP_ID, DEFAULT_ISSUER, 
 
 CONFIG = json.loads((ROOT / "config/app_store_connect.json").read_text())
 VERSION_ID = CONFIG["versionId"]
-BUILD_ID = CONFIG["buildId"]
+BUILD_NUMBER = CONFIG.get("buildNumber", "")
 LOCALIZATION_ID = "e3f09bbf-0a42-4e37-8511-77e47903dae5"
 IPHONE_DIR = ROOT / "distribution/screenshots/6.7-inch"
+REVIEW_REPLY = ROOT / "distribution/AppStoreReviewReply-May31-2026.txt"
 
 SCREENSHOT_TYPES = [
     ("APP_IPHONE_67", IPHONE_DIR, (1290, 2796)),
     ("APP_IPAD_PRO_3GEN_129", IPHONE_DIR, (2048, 2732)),
 ]
 
-PRODUCT_IDS = list(CONFIG["products"].values())
+
+def resolve_build_id(client: ASCClient, build_number: str) -> str:
+    builds = client.get(
+        f"{API_V1}/apps/{DEFAULT_APP_ID}/builds?limit=20&sort=-uploadedDate"
+    )
+    for item in builds.get("data", []):
+        if item["attributes"].get("version") == build_number:
+            return item["id"]
+    raise RuntimeError(f"Build {build_number} not found in App Store Connect yet")
+
+
+def wait_for_build(client: ASCClient, build_number: str, timeout_s: int = 900) -> str:
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        try:
+            return resolve_build_id(client, build_number)
+        except RuntimeError:
+            print(f"  waiting for build {build_number} to appear in Connect…")
+            time.sleep(30)
+    raise TimeoutError(f"Build {build_number} not available after {timeout_s}s")
 
 
 def resize_screenshot(src: Path, dest: Path, width: int, height: int) -> None:
@@ -119,17 +139,8 @@ def upload_listing_screenshots(client: ASCClient) -> None:
 
 
 def update_review_notes(client: ASCClient) -> None:
-    notes_path = ROOT / "docs/AppStoreResolutionCenterReply-2.1b.txt"
-    review_notes = f"""RESUBMISSION — Guideline 2.1(b) IAP fix (Submission 610c83c3-b828-4203-b64b-827789899d61)
-
-{notes_path.read_text()}
-
-HOW TO TEST (no login required):
-Learn → Resume → Practice → Collection → Sessions → Progress.
-Premium: Account → Premium Plan (StoreKit 2, Sandbox Apple ID). Restore Purchases on same screen.
-
-All five IAP products submitted with review screenshots. Build {CONFIG['buildNumber']}.
-"""
+    notes_path = REVIEW_REPLY if REVIEW_REPLY.exists() else ROOT / "docs/AppStoreResolutionCenterReply-2.1b.txt"
+    review_notes = notes_path.read_text()
     detail = client.get(f"{API_V1}/appStoreVersions/{VERSION_ID}/appStoreReviewDetail")
     detail_id = detail["data"]["id"]
     status, resp = client.patch(
@@ -219,7 +230,7 @@ def submit_for_review(client: ASCClient) -> str:
     )
     if status not in (200, 201):
         raise RuntimeError(f"Add app version failed: {resp}")
-    print("  ✓ app version added (IAP products are Ready to Submit in Connect)")
+    print("  ✓ app version added (IAP-free — no In-App Purchase products attached)")
 
     status, resp = client.patch(
         f"{API_V1}/reviewSubmissions/{submission_id}",
@@ -246,19 +257,31 @@ def main() -> int:
     key_path = Path.home() / f".appstoreconnect/private_keys/AuthKey_{key_id}.p8"
     client = ASCClient(issuer, key_id, key_path)
 
-    attach_build(client, VERSION_ID, BUILD_ID)
+    ipa = ROOT / "build/export/medlingo.ipa"
+    if ipa.exists() and os.environ.get("SKIP_IPA_UPLOAD") != "1":
+        print(f"→ Uploading {ipa.name}…")
+        upload_ipa(ipa, issuer, key_id, key_path)
+        if BUILD_NUMBER:
+            build_id = wait_for_build(client, BUILD_NUMBER)
+        else:
+            builds = client.get(f"{API_V1}/apps/{DEFAULT_APP_ID}/builds?limit=1&sort=-uploadedDate")
+            build_id = builds["data"][0]["id"]
+    elif CONFIG.get("buildId"):
+        build_id = CONFIG["buildId"]
+    elif BUILD_NUMBER:
+        build_id = wait_for_build(client, BUILD_NUMBER, timeout_s=120)
+    else:
+        builds = client.get(f"{API_V1}/apps/{DEFAULT_APP_ID}/builds?limit=1&sort=-uploadedDate")
+        build_id = builds["data"][0]["id"]
+
+    attach_build(client, VERSION_ID, build_id)
     upload_listing_screenshots(client)
     update_review_notes(client)
     submission_id = submit_for_review(client)
 
-    ipa = ROOT / "build/export/medlingo.ipa"
-    if ipa.exists() and os.environ.get("UPLOAD_IPA") == "1":
-        try:
-            upload_ipa(ipa, issuer, key_id, key_path)
-        except Exception as e:
-            print(f"IPA upload skipped: {e}")
-
-    print(f"\n✅ Resubmission complete. Review submission: {submission_id}")
+    print(f"\n✅ IAP-free resubmission complete. Review submission: {submission_id}")
+    print(f"   Build: {BUILD_NUMBER or build_id}")
+    print(f"   Paste Resolution Center reply from: {REVIEW_REPLY}")
     return 0
 
 

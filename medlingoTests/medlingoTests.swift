@@ -14,7 +14,6 @@ struct ChapterModelTests {
             title: "Foundations",
             summary: "Word parts and basics",
             estimatedMinutes: 45,
-            isPremium: false,
             coverArtURL: nil,
             accentColorHex: "3498DB",
             prerequisiteIDs: [],
@@ -22,13 +21,12 @@ struct ChapterModelTests {
         )
         #expect(chapter.number == 1)
         #expect(chapter.title == "Foundations")
-        #expect(chapter.isPremium == false)
         #expect(chapter.unlockRule == .free)
     }
 
     @Test func chapterUnlockRules() {
-        let rules: [Chapter.UnlockRule] = [.free, .sequential, .premium, .institutional]
-        #expect(rules.count == 4)
+        let rules: [Chapter.UnlockRule] = [.free, .sequential, .institutional]
+        #expect(rules.count == 3)
         for rule in rules {
             let encoded = try? JSONEncoder().encode(rule)
             #expect(encoded != nil)
@@ -42,11 +40,10 @@ struct ChapterModelTests {
             title: "Skeletal",
             summary: "Bones and joints",
             estimatedMinutes: 75,
-            isPremium: true,
             coverArtURL: URL(string: "https://example.com/image.png"),
             accentColorHex: "F1C40F",
             prerequisiteIDs: [UUID(), UUID()],
-            unlockRule: .premium
+            unlockRule: .sequential
         )
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
@@ -57,109 +54,19 @@ struct ChapterModelTests {
         #expect(decoded.id == chapter.id)
         #expect(decoded.number == chapter.number)
         #expect(decoded.title == chapter.title)
-        #expect(decoded.isPremium == true)
         #expect(decoded.prerequisiteIDs.count == 2)
     }
 
     @Test func chapterHashable() {
         let id = UUID()
-        let chapter1 = Chapter(id: id, number: 1, title: "A", summary: "", estimatedMinutes: 30, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
-        let chapter2 = Chapter(id: id, number: 1, title: "A", summary: "", estimatedMinutes: 30, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
+        let chapter1 = Chapter(id: id, number: 1, title: "A", summary: "", estimatedMinutes: 30, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
+        let chapter2 = Chapter(id: id, number: 1, title: "A", summary: "", estimatedMinutes: 30, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
         #expect(chapter1 == chapter2)
 
         var set: Set<Chapter> = []
         set.insert(chapter1)
         set.insert(chapter2)
         #expect(set.count == 1)
-    }
-}
-
-struct EntitlementModelTests {
-
-    @Test func entitlementValidActive() {
-        let entitlement = Entitlement(
-            id: UUID(),
-            userID: UUID(),
-            productID: "com.medlingo.premium.monthly",
-            status: .active,
-            expiresAt: Date().addingTimeInterval(86400 * 30),
-            grantedAt: Date(),
-            source: .applePurchase
-        )
-        #expect(entitlement.isValid == true)
-    }
-
-    @Test func entitlementExpired() {
-        let entitlement = Entitlement(
-            id: UUID(),
-            userID: UUID(),
-            productID: "com.medlingo.premium.monthly",
-            status: .active,
-            expiresAt: Date().addingTimeInterval(-86400),
-            grantedAt: Date().addingTimeInterval(-86400 * 31),
-            source: .applePurchase
-        )
-        #expect(entitlement.isValid == false)
-    }
-
-    @Test func entitlementRevoked() {
-        let entitlement = Entitlement(
-            id: UUID(),
-            userID: UUID(),
-            productID: "com.medlingo.premium.yearly",
-            status: .revoked,
-            expiresAt: Date().addingTimeInterval(86400 * 300),
-            grantedAt: Date(),
-            source: .adminGrant
-        )
-        #expect(entitlement.isValid == false)
-    }
-
-    @Test func entitlementGracePeriodIsValid() {
-        let entitlement = Entitlement(
-            id: UUID(),
-            userID: UUID(),
-            productID: "com.medlingo.premium.monthly",
-            status: .gracePeriod,
-            expiresAt: Date().addingTimeInterval(86400 * 7),
-            grantedAt: Date(),
-            source: .applePurchase
-        )
-        #expect(entitlement.isValid == true)
-    }
-
-    @Test func entitlementNoExpiryIsValid() {
-        let entitlement = Entitlement(
-            id: UUID(),
-            userID: UUID(),
-            productID: "com.medlingo.chapter.unlock",
-            status: .active,
-            expiresAt: nil,
-            grantedAt: Date(),
-            source: .promotional
-        )
-        #expect(entitlement.isValid == true)
-    }
-
-    @Test func entitlementSources() {
-        let sources: [Entitlement.EntitlementSource] = [.applePurchase, .adminGrant, .institutional, .promotional]
-        #expect(sources.count == 4)
-    }
-
-    @Test func entitlementCodable() throws {
-        let entitlement = Entitlement(
-            id: UUID(),
-            userID: UUID(),
-            productID: "test.product",
-            status: .billingRetry,
-            expiresAt: Date(),
-            grantedAt: Date(),
-            source: .institutional
-        )
-        let data = try JSONEncoder().encode(entitlement)
-        let decoded = try JSONDecoder().decode(Entitlement.self, from: data)
-        #expect(decoded.status == .billingRetry)
-        #expect(decoded.source == .institutional)
     }
 }
 
@@ -354,29 +261,6 @@ struct AttemptModelTests {
     }
 }
 
-struct ProductModelTests {
-
-    @Test func productTypes() {
-        let types: [AppProduct.ProductType] = [.subscription, .chapterPack, .sessionBundle, .institutionalPlan]
-        #expect(types.count == 4)
-    }
-
-    @Test func productCodable() throws {
-        let product = AppProduct(
-            id: "com.medlingo.premium.monthly",
-            name: "Premium Monthly",
-            description: "Full access",
-            type: .subscription,
-            priceCents: 999,
-            features: ["All chapters", "Practice lab", "Tutor messaging"]
-        )
-        let data = try JSONEncoder().encode(product)
-        let decoded = try JSONDecoder().decode(AppProduct.self, from: data)
-        #expect(decoded.id == product.id)
-        #expect(decoded.features.count == 3)
-    }
-}
-
 // MARK: - Core Service Tests
 
 struct NetworkClientTests {
@@ -550,7 +434,6 @@ struct PerformanceTests {
                 title: "Stage \(index + 1)",
                 summary: "Summary",
                 estimatedMinutes: 45,
-                isPremium: index > 2,
                 coverArtURL: nil,
                 accentColorHex: "3498DB",
                 prerequisiteIDs: [],
@@ -583,27 +466,6 @@ struct PerformanceTests {
         let elapsed = clock.now - start
         // 5ms for 15 colors — stable on CI runners; <1ms on device
         #expect(elapsed < .milliseconds(5))
-    }
-
-    @Test func entitlementValidationUnder10ms() {
-        let entitlements = (0..<500).map { _ in
-            Entitlement(
-                id: UUID(),
-                userID: UUID(),
-                productID: "com.medlingo.premium.monthly",
-                status: .active,
-                expiresAt: Date().addingTimeInterval(86400 * 30),
-                grantedAt: Date(),
-                source: .applePurchase
-            )
-        }
-        let clock = ContinuousClock()
-        let start = clock.now
-        let validCount = entitlements.filter(\.isValid).count
-        let elapsed = clock.now - start
-        #expect(validCount == 500)
-        // 25ms for 500 validations — top-tier on device; CI runners vary
-        #expect(elapsed < .milliseconds(25))
     }
 
     @Test func generatedArtworkFilterUnder5ms() {

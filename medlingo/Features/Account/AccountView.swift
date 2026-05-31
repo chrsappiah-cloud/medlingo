@@ -9,7 +9,6 @@ struct AccountView: View {
         NavigationStack {
             List {
                 profileSection
-                subscriptionSection
                 preferencesSection
                 supportSection
                 dangerZone
@@ -66,53 +65,11 @@ struct AccountView: View {
                     Text("christopher@email.com")
                         .font(AppTypography.subheadline)
                         .foregroundColor(AppColor.textSecondary)
-                    HStack(spacing: AppSpacing.xxs) {
-                        Image(systemName: "crown.fill")
-                            .font(.caption2)
-                            .foregroundColor(AppColor.gold)
-                        Text("Premium")
-                            .font(AppTypography.caption1)
-                            .foregroundColor(AppColor.gold)
-                    }
                 }
             }
             .padding(.vertical, AppSpacing.xs)
             .listRowBackground(AppColor.surface)
         }
-    }
-
-    private var subscriptionSection: some View {
-        Section {
-            HStack {
-                Label("All Content Free", systemImage: "crown.fill")
-                    .foregroundColor(AppColor.textPrimary)
-                Spacer()
-                Text("Active")
-                    .font(AppTypography.caption1)
-                    .foregroundColor(AppColor.emerald)
-            }
-        } header: {
-            Text("Subscription")
-        } footer: {
-            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text("All stages, lessons, and practice modes are available for free.")
-                    .font(AppTypography.caption2)
-                HStack(spacing: AppSpacing.sm) {
-                    Link(destination: AppConstants.privacyURL) {
-                        Text("Privacy Policy")
-                            .font(AppTypography.caption2)
-                            .foregroundColor(AppColor.diamond)
-                    }
-                    Link(destination: AppConstants.termsURL) {
-                        Text("Terms of Use (EULA)")
-                            .font(AppTypography.caption2)
-                            .foregroundColor(AppColor.diamond)
-                    }
-                }
-                .padding(.top, AppSpacing.xxs)
-            }
-        }
-        .listRowBackground(AppColor.surface)
     }
 
     private var preferencesSection: some View {
@@ -278,7 +235,7 @@ struct HelpCenterView: View {
     var body: some View {
         List {
             Section("FAQ") {
-                FAQRow(question: "How do I unlock premium stages?", answer: "All stages are available for free. No subscription or purchase needed.")
+                FAQRow(question: "Are all stages available?", answer: "Yes. All stages, lessons, and practice modes are included at no cost.")
                 FAQRow(question: "How do tutor sessions work?", answer: "Browse available tutors, book a session, and join via video call at the scheduled time.")
                 FAQRow(question: "Can I study offline?", answer: "Yes! Previously loaded stages and flashcards are cached locally for offline access.")
             }

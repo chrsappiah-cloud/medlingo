@@ -3,16 +3,9 @@
   "keyId": "4B8M4ZHLMF",
   "appId": "6766951084",
   "bundleId": "wcs.medlingo",
-  "subscriptionGroupId": "22118096",
   "versionId": "f59c3cca-7268-4944-a5e2-6ba91c02a513",
   "buildId": "4b9de684-e49d-4bbb-9246-dcb49f368983",
-  "buildNumber": "202605301200",
+  "buildNumber": "202605311300",
   "reviewSubmissionId": "72a127f7-1a12-443c-964c-b11a5ba400e7",
-  "products": {
-    "com.medlingo.premium.monthly": { "type": "subscription", "id": "6773959722" },
-    "com.medlingo.premium.yearly": { "type": "subscription", "id": "6773959767" },
-    "com.medlingo.sessions.5pack": { "type": "inAppPurchase", "id": "6773959277" },
-    "com.medlingo.sessions.10pack": { "type": "inAppPurchase", "id": "6773959673" },
-    "com.medlingo.chapter.unlock": { "type": "inAppPurchase", "id": "6773959856" }
-  }
+  "products": {}
 }

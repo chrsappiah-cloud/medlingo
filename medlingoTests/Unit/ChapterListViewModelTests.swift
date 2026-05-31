@@ -21,14 +21,14 @@ struct ChapterListViewModelTests {
         }
     }
 
-    @Test func chapters_areNotPremium() {
+    @Test func chapters_areFree() {
         for chapter in sut.chapters {
-            #expect(chapter.isPremium == false)
+            #expect(chapter.unlockRule == .free || chapter.unlockRule == .sequential)
         }
     }
 
     @Test func progress_forNewChapter_returnsZero() {
-        let newChapter = Chapter(id: UUID(), number: 99, title: "New", summary: "", estimatedMinutes: 10, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
+        let newChapter = Chapter(id: UUID(), number: 99, title: "New", summary: "", estimatedMinutes: 10, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
         #expect(sut.progress(for: newChapter) == 0)
     }
 

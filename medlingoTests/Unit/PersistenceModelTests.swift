@@ -18,7 +18,7 @@ struct PersistenceModelTests {
     // MARK: - CachedChapter
 
     @Test func cachedChapter_initFromChapter() {
-        let chapter = Chapter(id: UUID(), number: 3, title: "Skeletal", summary: "Bones", estimatedMinutes: 75, isPremium: false, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .free)
+        let chapter = Chapter(id: UUID(), number: 3, title: "Skeletal", summary: "Bones", estimatedMinutes: 75, coverArtURL: nil, accentColorHex: "50C878", prerequisiteIDs: [], unlockRule: .free)
         let cached = CachedChapter(from: chapter)
 
         #expect(cached.chapterID == chapter.id)
@@ -26,19 +26,18 @@ struct PersistenceModelTests {
         #expect(cached.title == "Skeletal")
         #expect(cached.summary == "Bones")
         #expect(cached.estimatedMinutes == 75)
-        #expect(cached.isPremium == false)
         #expect(cached.accentColorHex == "50C878")
     }
 
     @Test func cachedChapter_setsLastSyncedAt() {
         let before = Date()
-        let cached = CachedChapter(from: Chapter(id: UUID(), number: 1, title: "Test", summary: "", estimatedMinutes: 10, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free))
+        let cached = CachedChapter(from: Chapter(id: UUID(), number: 1, title: "Test", summary: "", estimatedMinutes: 10, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free))
 
         #expect(cached.lastSyncedAt >= before)
     }
 
     @Test func cachedChapter_roundTrip() throws {
-        let chapter = Chapter(id: UUID(), number: 5, title: "Nervous", summary: "Nerves", estimatedMinutes: 90, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
+        let chapter = Chapter(id: UUID(), number: 5, title: "Nervous", summary: "Nerves", estimatedMinutes: 90, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
         let cached = CachedChapter(from: chapter)
         context.insert(cached)
         try context.save()
@@ -53,7 +52,7 @@ struct PersistenceModelTests {
 
     @Test func cachedChapter_insertAndUpdateSameID() throws {
         let id = UUID()
-        let chapter1 = Chapter(id: id, number: 1, title: "First", summary: "", estimatedMinutes: 10, isPremium: false, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
+        let chapter1 = Chapter(id: id, number: 1, title: "First", summary: "", estimatedMinutes: 10, coverArtURL: nil, accentColorHex: "", prerequisiteIDs: [], unlockRule: .free)
 
         let cached = CachedChapter(from: chapter1)
         context.insert(cached)

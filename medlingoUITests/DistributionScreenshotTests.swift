@@ -12,7 +12,9 @@ final class DistributionScreenshotTests: XCTestCase {
         app.launch()
     }
 
-    private static let stagingDirectory = "/tmp/medlingo-distribution-screenshots"
+    private static var defaultOutputDirectory: String {
+        NSTemporaryDirectory() + "medlingo-distribution-screenshots"
+    }
 
     @MainActor
     func testCaptureDistributionScreenshots() throws {
@@ -106,7 +108,7 @@ final class DistributionScreenshotTests: XCTestCase {
            !env.isEmpty {
             return env
         }
-        return stagingDirectory
+        return defaultOutputDirectory
     }
 
     private func capture(name: String, outputDir: String) {
