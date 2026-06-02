@@ -7,7 +7,6 @@ struct TutorSession: Identifiable, Codable, Hashable {
     let description: String?
     let startsAt: Date
     let durationMinutes: Int
-    let priceCents: Int
     let seatsAvailable: Int
     let seatsBooked: Int
     let chapterIDs: [UUID]

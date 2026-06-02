@@ -39,10 +39,10 @@ final class MessagingService: MessagingServiceProtocol {
         ))
     }
 
-    /// Subscribes to new messages using Supabase Realtime-style polling.
+    /// Starts new-message updates using Supabase Realtime-style polling.
     /// Polls for messages newer than the last seen timestamp every 3 seconds.
     /// When Supabase Swift SDK adds native Realtime, swap to WebSocket channel.
-    func subscribeToMessages(userID: UUID, callback: @escaping ([ChatMessage]) -> Void) {
+    func startMessageUpdates(userID: UUID, callback: @escaping ([ChatMessage]) -> Void) {
         realtimeTask?.cancel()
         realtimeTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -72,7 +72,7 @@ final class MessagingService: MessagingServiceProtocol {
         }
     }
 
-    func unsubscribe() {
+    func stopMessageUpdates() {
         realtimeTask?.cancel()
         realtimeTask = nil
     }

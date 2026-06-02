@@ -1,0 +1,90 @@
+name: iOS CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - "fix/**"
+      - "codex/**"
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Select available iPhone simulator
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          import subprocess
+
+          payload = subprocess.check_output([
+              "xcrun",
+              "simctl",
+              "list",
+              "devices",
+              "available",
+              "-j",
+          ])
+          devices = json.loads(payload)["devices"]
+
+          candidates = []
+          for runtime_devices in devices.values():
+              for device in runtime_devices:
+                  name = device.get("name", "")
+                  if device.get("isAvailable") and name.startswith("iPhone"):
+                      candidates.append(device)
+
+          if not candidates:
+              raise SystemExit("No available iPhone simulator found")
+
+          preferred = sorted(candidates, key=lambda item: item["name"], reverse=True)[0]
+          print(f"SIMULATOR_ID={preferred['udid']}")
+          print(f"SIMULATOR_NAME={preferred['name']}")
+          PY
+
+      - name: Boot simulator
+        run: |
+          set -euo pipefail
+          echo "Using simulator: $SIMULATOR_NAME ($SIMULATOR_ID)"
+          xcrun simctl boot "$SIMULATOR_ID" || true
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+
+      - name: Build for testing
+        run: |
+          set -euo pipefail
+          xcodebuild build-for-testing \
+            -project medlingo.xcodeproj \
+            -scheme medlingo \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/medlingo-derived"
+
+      - name: Run unit and contract tests
+        run: |
+          set -euo pipefail
+          xcodebuild test-without-building \
+            -project medlingo.xcodeproj \
+            -scheme medlingo \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/medlingo-derived" \
+            -only-testing:medlingoTests

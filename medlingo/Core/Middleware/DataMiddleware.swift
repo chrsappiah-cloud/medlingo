@@ -227,8 +227,8 @@ final class DataMiddleware {
 
     static func sampleSessions() -> [TutorSession] {
         [
-            TutorSession(id: UUID(), tutorID: UUID(), title: "Cardiology Terminology Deep Dive", description: "Expert-led session on cardiovascular terms", startsAt: Date().addingTimeInterval(86400), durationMinutes: 45, priceCents: 2500, seatsAvailable: 10, seatsBooked: 3, chapterIDs: [], status: .scheduled),
-            TutorSession(id: UUID(), tutorID: UUID(), title: "Anatomy Prefixes & Suffixes", description: "Master word-building strategies", startsAt: Date().addingTimeInterval(172800), durationMinutes: 30, priceCents: 1500, seatsAvailable: 8, seatsBooked: 5, chapterIDs: [], status: .scheduled),
+            TutorSession(id: UUID(), tutorID: UUID(), title: "Cardiology Terminology Deep Dive", description: "Expert-led session on cardiovascular terms", startsAt: Date().addingTimeInterval(86400), durationMinutes: 45, seatsAvailable: 10, seatsBooked: 3, chapterIDs: [], status: .scheduled),
+            TutorSession(id: UUID(), tutorID: UUID(), title: "Anatomy Prefixes & Suffixes", description: "Master word-building strategies", startsAt: Date().addingTimeInterval(172800), durationMinutes: 30, seatsAvailable: 8, seatsBooked: 5, chapterIDs: [], status: .scheduled),
         ]
     }
 

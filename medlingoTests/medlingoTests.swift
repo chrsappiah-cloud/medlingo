@@ -122,14 +122,13 @@ struct UserModelTests {
             bio: "Medical terminology expert",
             subjects: ["Cardiovascular", "Respiratory"],
             isVerified: false,
-            hourlyRateCents: 4500,
             availabilityPolicy: nil,
             rating: 0.0,
             totalSessions: 0
         )
         #expect(profile.isVerified == false)
         #expect(profile.subjects.count == 2)
-        #expect(profile.hourlyRateCents == 4500)
+        #expect(profile.availabilityPolicy == nil)
     }
 }
 
@@ -143,7 +142,6 @@ struct TutorSessionModelTests {
             description: "Heart terminology",
             startsAt: Date().addingTimeInterval(3600),
             durationMinutes: 60,
-            priceCents: 4500,
             seatsAvailable: 5,
             seatsBooked: 5,
             chapterIDs: [UUID()],
@@ -160,7 +158,6 @@ struct TutorSessionModelTests {
             description: nil,
             startsAt: Date().addingTimeInterval(7200),
             durationMinutes: 45,
-            priceCents: 3800,
             seatsAvailable: 10,
             seatsBooked: 3,
             chapterIDs: [],
