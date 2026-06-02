@@ -1,10 +1,10 @@
 Hello App Review,
 
-Thank you for your follow-up regarding Submission ID 72a127f7-1a12-443c-964c-b11a5ba400e7 (Version 1.0), reviewed on May 29, 2026 on iPad Air 11-inch (M3), iPadOS 26.5.
+Thank you for your follow-up regarding Submission ID 72a127f7-1a12-443c-964c-b11a5ba400e7 (Version 1.0), reviewed on June 01, 2026 on iPad Air 11-inch (M3) and iPhone 17 Pro Max.
 
 We have addressed both Guideline 2.1(b) issues by removing all In-App Purchase functionality from the app. Medlingo is now a fully free app with no subscriptions, no premium tiers, and no purchase flows.
 
-A new build (1.0, build 202605311300) has been uploaded with all IAP code removed and verified on iPhone 17 Pro Max (physical device, iOS 26.6) and iPhone 17 Pro Max simulator (iOS 26.5).
+A new build (1.0, build 202606030900) has been uploaded to App Store Connect with all IAP code removed and verified on iPhone 17 Pro Max (physical device, iOS 26.6) and iPhone 17 Pro Max simulator (iOS 26.5).
 
 ---
 
@@ -26,7 +26,7 @@ Resolution: The Upgrade button, Premium Plan screen, Restore Purchases control, 
 
 ---
 
-WHAT CHANGED IN BUILD 202605311300
+WHAT CHANGED IN BUILD 202606030900
 
 • Removed EntitlementService, Entitlement model, and Product catalog — no purchase verification layer
 • Account screen — no subscription section, Premium badge, or purchase FAQ
@@ -65,7 +65,7 @@ Core learning content is fully available without sign-in, Sandbox Apple ID, or p
 
 APP STORE CONNECT ACTIONS TAKEN
 
-• New binary uploaded: Version 1.0, build 202605311300
+• New binary uploaded: Version 1.0, build 202606030900
 • App pricing: Free — no In-App Purchases
 • IAP products are no longer referenced by the app
 

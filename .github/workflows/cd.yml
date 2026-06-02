@@ -3,7 +3,7 @@ name: CD - Deploy to TestFlight
 # Runs only after CI succeeds on main, or via manual dispatch.
 on:
   workflow_run:
-    workflows: ["CI - Build & Test (ARC Shield)"]
+    workflows: ["iOS CI"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -167,7 +167,7 @@ jobs:
           echo "- **Build**: $BUILD_NUMBER" >> $GITHUB_STEP_SUMMARY
           echo "- **Bundle ID**: $BUNDLE_ID" >> $GITHUB_STEP_SUMMARY
           echo "- **Destination**: TestFlight" >> $GITHUB_STEP_SUMMARY
-          echo "- **Next**: Submit IAP products + new build per docs/AppStoreIAPResubmission.md" >> $GITHUB_STEP_SUMMARY
+          echo "- **Next**: Select this free-app build in App Store Connect and reply to App Review with docs/AppStoreFreeResubmission.md" >> $GITHUB_STEP_SUMMARY
 
       - name: Clean up keychain
         if: always()

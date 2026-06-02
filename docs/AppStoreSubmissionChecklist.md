@@ -20,13 +20,12 @@ Complete before every App Store Connect submission.
 - [ ] Sign-out works from Account
 - [ ] Account deletion or support path works if required
 
-## Subscriptions (StoreKit)
+## Free app / no purchases
 
-- [ ] All IAP products **Ready to Submit** in App Store Connect with review screenshots (`docs/AppStoreIAPResubmission.md`)
-- [ ] IAP products included on the app version submission
-- [ ] Subscription plans load or show clear error (not silent failure)
-- [ ] Upgrade button shows loading state during purchase
-- [ ] Restore Purchases completes without crash
+- [ ] App Store pricing is set to **Free**
+- [ ] No In-App Purchases or subscriptions are attached to the app version
+- [ ] Account screen contains no plan, upgrade, restore, pricing, or paywall UI
+- [ ] Learning, Practice, Collection, Sessions, Progress, and Account flows are reachable without sign-in or purchase
 - [ ] Previous rejection regression tests pass (see `docs/RegressionLedger.md`)
 
 ## Navigation & stability
