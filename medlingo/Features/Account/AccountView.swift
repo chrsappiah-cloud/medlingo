@@ -2,8 +2,9 @@ import SwiftUI
 
 struct AccountView: View {
     @Environment(AppState.self) private var appState
-    @State private var showSignOutAlert = false
     @State private var showDeleteAlert = false
+    @State private var signOutMessage: String?
+    @State private var showSignIn = false
 
     var body: some View {
         NavigationStack {
@@ -18,14 +19,6 @@ struct AccountView: View {
             .background(AppColor.background)
             .navigationTitle("Account")
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .alert("Sign Out", isPresented: $showSignOutAlert) {
-                Button("Cancel", role: .cancel) {}
-                Button("Sign Out", role: .destructive) {
-                    Task { try? await appState.authService.signOut() }
-                }
-            } message: {
-                Text("Are you sure you want to sign out?")
-            }
             .alert("Delete Account", isPresented: $showDeleteAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) {
@@ -33,6 +26,20 @@ struct AccountView: View {
                 }
             } message: {
                 Text("This action is permanent and cannot be undone. All your data will be deleted.")
+            }
+            .alert(
+                "Account",
+                isPresented: Binding(
+                    get: { signOutMessage != nil },
+                    set: { if !$0 { signOutMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(signOutMessage ?? "")
+            }
+            .sheet(isPresented: $showSignIn) {
+                SignInView()
             }
         }
         .preferredColorScheme(.dark)
@@ -52,19 +59,28 @@ struct AccountView: View {
                         )
                         .frame(width: 56, height: 56)
                         .overlay(Circle().stroke(AppColor.gold.opacity(0.5), lineWidth: 1.5))
-                    Text("C")
-                        .font(AppTypography.title2)
-                        .foregroundColor(AppColor.gold)
+                    if appState.authService.isAuthenticated,
+                       let initial = appState.authService.currentUser?.displayName.first.map(String.init) {
+                        Text(initial)
+                            .font(AppTypography.title2)
+                            .foregroundColor(AppColor.gold)
+                    } else {
+                        Image(systemName: "person.fill")
+                            .font(AppTypography.title2)
+                            .foregroundColor(AppColor.gold)
+                    }
                 }
                 .shadow(color: AppColor.gold.opacity(0.3), radius: 6)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                    Text("Christopher")
+                    Text(displayName)
                         .font(AppTypography.headline)
                         .foregroundColor(AppColor.textPrimary)
-                    Text("christopher@email.com")
+                        .accessibilityIdentifier("account-display-name")
+                    Text(displayEmail)
                         .font(AppTypography.subheadline)
                         .foregroundColor(AppColor.textSecondary)
+                        .accessibilityIdentifier("account-display-email")
                 }
             }
             .padding(.vertical, AppSpacing.xs)
@@ -118,21 +134,47 @@ struct AccountView: View {
 
     private var dangerZone: some View {
         Section {
-            Button {
-                showSignOutAlert = true
-            } label: {
-                Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                    .foregroundColor(AppColor.error)
-            }
-            .accessibilityIdentifier("sign-out-button")
-            Button {
-                showDeleteAlert = true
-            } label: {
-                Label("Delete Account", systemImage: "trash.fill")
-                    .foregroundColor(AppColor.error.opacity(0.7))
+            if appState.authService.isAuthenticated {
+                Button {
+                    Task {
+                        do {
+                            try await appState.authService.signOut()
+                            signOutMessage = "You have been signed out."
+                        } catch {
+                            signOutMessage = "Sign out could not be completed. Please try again."
+                        }
+                    }
+                } label: {
+                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        .foregroundColor(AppColor.error)
+                }
+                .accessibilityIdentifier("sign-out-button")
+
+                Button {
+                    showDeleteAlert = true
+                } label: {
+                    Label("Delete Account", systemImage: "trash.fill")
+                        .foregroundColor(AppColor.error.opacity(0.7))
+                }
+            } else {
+                Button {
+                    showSignIn = true
+                } label: {
+                    Label("Sign In", systemImage: "person.badge.key.fill")
+                        .foregroundColor(AppColor.diamond)
+                }
+                .accessibilityIdentifier("sign-in-button")
             }
         }
         .listRowBackground(AppColor.surface)
+    }
+
+    private var displayName: String {
+        appState.authService.currentUser?.displayName ?? "Guest learner"
+    }
+
+    private var displayEmail: String {
+        appState.authService.currentUser?.email ?? "No account signed in"
     }
 
     private var copyrightSection: some View {

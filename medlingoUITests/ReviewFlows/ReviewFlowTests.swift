@@ -19,14 +19,29 @@ final class ReviewFlowTests: UITestCaseBase {
     }
 
     @MainActor
-    func testAccount_signOutButtonReachable() throws {
+    func testAccount_cleanLaunchShowsGuestAndNoSignOut() throws {
         launchApp()
         tapTab("Account")
+        XCTAssertTrue(app.staticTexts["Guest learner"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["No account signed in"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["sign-out-button"].exists)
+    }
+
+    @MainActor
+    func testAccount_signOutClearsAuthenticatedSession() throws {
+        launchApp(arguments: [
+            UITestLaunchArguments.uiTestMode,
+            UITestLaunchArguments.seedAuthenticatedSession
+        ])
+        tapTab("Account")
+        XCTAssertTrue(app.staticTexts["Review Learner"].waitForExistence(timeout: 5))
         let signOut = app.buttons["sign-out-button"]
-        if !signOut.waitForExistence(timeout: 3) {
-            app.collectionViews.firstMatch.swipeUp()
-            app.collectionViews.firstMatch.swipeUp()
-        }
+        if !signOut.waitForExistence(timeout: 3) { app.collectionViews.firstMatch.swipeUp() }
         XCTAssertTrue(signOut.waitForExistence(timeout: 8))
+        signOut.tap()
+        XCTAssertTrue(app.alerts["Account"].waitForExistence(timeout: 5))
+        app.alerts["Account"].buttons["OK"].tap()
+        XCTAssertTrue(app.staticTexts["Guest learner"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["sign-out-button"].exists)
     }
 }

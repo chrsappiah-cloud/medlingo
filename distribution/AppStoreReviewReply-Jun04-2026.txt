@@ -1,0 +1,39 @@
+Hello App Review team,
+
+Thank you for the follow-up on Submission ID f0b9e97b-28d7-4721-945d-519057ba6f3f, reviewed on June 04, 2026.
+
+We confirm that the Guideline 2.3.3 Accurate Metadata concern raised in this review has been addressed. The issue identified was that the 13-inch iPad screenshots did not show the actual app in use in the majority of screenshots. We have replaced the 13-inch iPad screenshot set with new screenshots captured directly from Medlingo running on an iPad simulator, showing actual app screens and core learner functionality.
+
+The updated 13-inch iPad screenshots now show Medlingo in use across the app's main learner flows:
+
+1. Learn home
+2. Practice Lab
+3. Anatomy labeling
+4. Collection gallery
+5. Progress dashboard
+6. Tutor sessions
+
+These screenshots are not splash screens, login screens, or marketing-only/promotional images. They show the product UI and the app's core educational functionality so users can understand the app's purpose and value from the App Store product page.
+
+We also reviewed App Store Connect Media Manager, including "View All Sizes" in the Previews and Screenshots section, and verified that the 13-inch iPad screenshot set was updated specifically. We additionally verified the 6.7-inch iPhone screenshot set remains device-appropriate and shows the same core app flows.
+
+Screenshot verification completed before this reply:
+
+- 13-inch iPad screenshot set: 6 screenshots verified at 2048 x 2732 pixels.
+- 6.7-inch iPhone screenshot set: 6 screenshots verified at 1290 x 2796 pixels.
+- Screenshot content: Learn, Practice Lab, Anatomy Labeling, Collection, Progress, and Tutor Sessions.
+
+Additional QA performed before resubmission:
+
+- Physical-device E2E testing was run on Christopher's iPhone, an iPhone 17 Pro Max on iOS 26.6.
+- Xcode result bundle: build/test-results/device/CriticalE2E-Jun04.xcresult.
+- Result: Passed.
+- Total selected tests: 9.
+- Passed tests: 9.
+- Failed tests: 0.
+- Skipped tests: 0.
+- Covered critical learner flows included launch, tab navigation, recovery behavior, review flow behavior, Learn, Practice, Sessions, Progress, and Account navigation.
+
+Based on the updated App Store screenshots and the verification above, we believe the screenshot metadata concern raised in this review has been adequately resolved. We are not claiming the app has already been approved; we are confirming that the specific issue identified by App Review has been corrected and that our selected E2E checks passed before this response.
+
+Thank you.

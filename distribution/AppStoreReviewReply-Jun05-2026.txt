@@ -1,0 +1,60 @@
+Hello App Review team,
+
+Thank you for the detailed feedback on Submission ID 9c5cdbf2-b8b6-4922-b611-1c62e68f1e12, reviewed on June 04, 2026.
+
+We have addressed all issues raised in this review and are submitting a new binary (build 202606051430) for review.
+
+Guideline 2.1(a) - Account state and Sign Out
+
+We found two issues:
+
+1. The Account screen was hardcoded to display a named avatar initial ("C") regardless of authentication state. On a fresh or clean install, this made the account appear to belong to a specific named user. This has been corrected — the avatar now shows a generic person icon when no account is signed in.
+
+2. The display name and email fields were showing a hardcoded user profile. These now correctly show "Guest learner" and "No account signed in" on a clean launch.
+
+Additional corrections:
+
+- Stale local auth tokens from older builds are cleared during launch.
+- The Sign Out button is only shown when a real user session exists.
+- When Sign Out is available, tapping it clears the session immediately and returns Account to the guest state.
+
+Guideline 2.1(b) and Guideline 3.1.2(c)
+
+We removed all paid-product and recurring-billing references from the app, active App Store metadata, review notes, and submission tooling. The app no longer presents any paid-access screen, paid plan language, paid unlock path, billing restore action, or paid product catalog.
+
+Medlingo is submitted as a free learning app. All core learning content is available without sign-in and without paid access.
+
+Reviewer test path:
+
+1. Launch the app.
+2. Confirm Learn opens directly with the learner curriculum.
+3. Open Practice, Collection, Sessions, and Progress.
+4. Open Account.
+5. Confirm Account shows a generic person icon, "Guest learner", and "No account signed in" on a clean install.
+6. Confirm no paid-access controls or billing screens are present.
+7. Confirm the Sign Out button is not shown on a clean install.
+
+Verification completed before this submission:
+
+Device: Christopher's iPhone, iOS 26.6
+Build: 202606051430
+Test suite: medlingoUITests (ReviewFlowTests, SmokeTests, RecoveryTests)
+Run date: 2026-06-05
+
+Results:
+- testAccount_cleanLaunchShowsGuestAndNoSignOut: PASSED
+- testAccount_signOutClearsAuthenticatedSession: PASSED
+- testFirstLaunch_cleanInstall_showsLearnHome: PASSED
+- testOfflineLaunch_appRemainsNavigable: PASSED
+- testLaunch_navigatesMainTabsWithoutCrash: PASSED
+- testHomeScreen_criticalContentVisible: PASSED
+- testTabNavigation_criticalScreensOpen: PASSED
+- testBackgroundThenForeground_appSurvives: PASSED
+- testExpiredTokenSeed_launchStillShowsAccount: PASSED
+- testPracticeLab_afterTabSwitch_remainsReachable: PASSED
+
+Total: 10 passed, 0 failed, 0 skipped.
+
+We are not claiming Apple approval before review is complete. We are confirming that all issues identified in this review have been corrected in the app and verified on a physical device before this resubmission.
+
+Thank you.

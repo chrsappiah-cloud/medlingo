@@ -59,48 +59,60 @@ final class DistributionScreenshotTests: XCTestCase {
 
     @MainActor
     private func tapTab(_ name: String) {
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        if tapTopTabStrip(name) { return }
 
-        let directTab = tabBar.buttons[name]
-        if directTab.waitForExistence(timeout: 5) {
-            if directTab.isHittable {
-                directTab.tap()
-                return
-            }
-            tabBar.swipeLeft()
-            if directTab.isHittable {
-                directTab.tap()
-                return
-            }
-            tabBar.swipeRight()
-            tabBar.swipeRight()
-            if directTab.isHittable {
-                directTab.tap()
-                return
-            }
-            directTab.tap()
+        // iOS 26+: tab bar uses a different accessibility container — broad button search.
+        let labelPred = NSPredicate(format: "label == %@", name)
+        let anyButton = app.buttons.matching(labelPred).firstMatch
+        if anyButton.waitForExistence(timeout: 8) {
+            anyButton.tap()
             return
         }
 
-        let more = tabBar.buttons["More"]
-        if more.waitForExistence(timeout: 2) {
-            more.tap()
-            let menuItems = [
-                app.buttons[name],
-                app.staticTexts[name],
-                app.cells[name],
-                app.cells.containing(NSPredicate(format: "label CONTAINS[c] %@", name)).firstMatch,
-            ]
-            for item in menuItems {
-                if item.waitForExistence(timeout: 2) {
-                    item.tap()
-                    return
+        // Legacy iOS tab bar fallback.
+        let tabBar = app.tabBars.firstMatch
+        if tabBar.waitForExistence(timeout: 3) {
+            let directTab = tabBar.buttons[name]
+            if directTab.waitForExistence(timeout: 3), directTab.isHittable {
+                directTab.tap()
+                return
+            }
+            let more = tabBar.buttons["More"]
+            if more.waitForExistence(timeout: 2) {
+                more.tap()
+                for item in [app.buttons[name], app.staticTexts[name],
+                             app.cells[name],
+                             app.cells.containing(NSPredicate(format: "label CONTAINS[c] %@", name)).firstMatch] {
+                    if item.waitForExistence(timeout: 2) { item.tap(); return }
                 }
             }
         }
 
         XCTFail("Tab '\(name)' not found in tab bar or More menu")
+    }
+
+    @MainActor
+    private func tapTopTabStrip(_ name: String) -> Bool {
+        let window = app.windows.firstMatch
+        guard window.waitForExistence(timeout: 1), window.frame.width > 700 else {
+            return false
+        }
+
+        let xOffsets: [String: CGFloat] = [
+            "Learn": 0.25,
+            "Practice": 0.33,
+            "Collection": 0.44,
+            "Sessions": 0.55,
+            "Progress": 0.66,
+            "Account": 0.77,
+        ]
+
+        guard let x = xOffsets[name] else {
+            return false
+        }
+
+        window.coordinate(withNormalizedOffset: CGVector(dx: x, dy: 0.04)).tap()
+        return true
     }
 
     private static func resolveOutputDirectory() -> String {

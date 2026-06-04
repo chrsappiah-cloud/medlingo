@@ -5,6 +5,7 @@ enum UITestLaunchArguments {
     static let offline = "-mockNetwork"
     static let offlineValue = "offline"
     static let seedExpiredToken = "-seedExpiredToken"
+    static let seedAuthenticatedSession = "-seedAuthenticatedSession"
     static let seedCreatorRole = "-seedCreatorRole"
 
     static func standardSmoke() -> [String] { [uiTestMode] }

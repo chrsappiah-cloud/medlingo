@@ -25,6 +25,7 @@ struct AppLaunchConfiguration: Sendable {
 
     var seedsEmptyDatabase: Bool { arguments.contains("-seedEmptyDatabase") }
     var seedsExpiredToken: Bool { arguments.contains("-seedExpiredToken") }
+    var seedsAuthenticatedSession: Bool { arguments.contains("-seedAuthenticatedSession") }
     var seedsMigratedState: Bool { arguments.contains("-seedMigratedState") }
     var seedsCreatorRole: Bool { arguments.contains("-seedCreatorRole") }
     var forcesDemoAIGeneration: Bool {

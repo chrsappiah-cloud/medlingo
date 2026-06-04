@@ -34,7 +34,12 @@ final class AuthService: AuthServiceProtocol {
         self.sessionStore = sessionStore
         self.accessToken = sessionStore.loadAccessToken()
         self.refreshToken = sessionStore.loadRefreshToken()
-        self.isAuthenticated = accessToken != nil
+        if accessToken != nil || refreshToken != nil {
+            sessionStore.clear()
+        }
+        self.accessToken = nil
+        self.refreshToken = nil
+        self.isAuthenticated = false
     }
 
     func signInWithApple(credential: ASAuthorizationAppleIDCredential) async throws {
@@ -100,9 +105,6 @@ final class AuthService: AuthServiceProtocol {
     }
 
     func signOut() async throws {
-        if accessToken != nil {
-            try? await client.request(Endpoint(path: "auth/v1/logout", method: .post))
-        }
         currentUser = nil
         accessToken = nil
         refreshToken = nil
@@ -150,6 +152,24 @@ final class AuthService: AuthServiceProtocol {
     func seedExpiredSessionForTesting() {
         sessionStore.saveRefreshToken("arc-expired-test-token")
         sessionStore.saveAccessToken("arc-expired-access-token")
+    }
+
+    func seedAuthenticatedSessionForTesting() {
+        currentUser = AppUser(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000321")!,
+            email: "reviewer@medlingo.app",
+            displayName: "Review Learner",
+            role: .learner,
+            status: .active,
+            institutionID: nil,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+        accessToken = "review-access-token"
+        refreshToken = "review-refresh-token"
+        isAuthenticated = true
+        sessionStore.saveAccessToken(accessToken)
+        sessionStore.saveRefreshToken(refreshToken)
     }
 
     private func applySession(_ session: AuthSession) {

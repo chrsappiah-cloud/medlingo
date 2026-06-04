@@ -122,7 +122,7 @@ Replace device APIs, services, time, and network layers with test doubles so beh
 | `SyncCoordinator` / `CloudKitSyncService` | Offline sync |
 | `PermissionProvider` | Microphone/camera policy for sessions |
 
-> **Note:** Medlingo is a **free app** with no In-App Purchases. Do not add `PurchaseService`, StoreKit mocks, or subscription-state fixtures. All stages are unlocked; test access rules accordingly.
+> **Note:** Medlingo is a free learning app. Do not add paid-access fixtures. All stages are unlocked; test access rules accordingly.
 
 ---
 
@@ -222,7 +222,7 @@ Every App Review rejection or production defect should become a durable test ent
 |-----------|---------|
 | `RuntimeLogger` | Structured launch/auth/network logging |
 | `AppLaunchConfiguration` | Deterministic UI test scenarios |
-| `ReviewFlowTests` | Reviewer-critical paths without sign-in or IAP |
+| `ReviewFlowTests` | Reviewer-critical paths without sign-in |
 | CI workflows | `ci.yml`, `ci-release.yml` |
 
 Run locally:

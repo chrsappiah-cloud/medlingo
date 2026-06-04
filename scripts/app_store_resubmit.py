@@ -15,24 +15,36 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from app_store_submit import ASCClient, API_V1, DEFAULT_APP_ID, DEFAULT_ISSUER, DEFAULT_KEY_ID, attach_build, upload_ipa
+from app_store_submit import ASCClient, API_V1, attach_build, upload_ipa
 
 CONFIG = json.loads((ROOT / "config/app_store_connect.json").read_text())
+APP_ID = CONFIG["appId"]
+DEFAULT_ISSUER = CONFIG["issuerId"]
+DEFAULT_KEY_ID = CONFIG["keyId"]
 VERSION_ID = CONFIG["versionId"]
-BUILD_NUMBER = CONFIG.get("buildNumber", "")
+BUILD_NUMBER = os.environ.get("BUILD_NUMBER", CONFIG.get("buildNumber", ""))
 LOCALIZATION_ID = "e3f09bbf-0a42-4e37-8511-77e47903dae5"
 IPHONE_DIR = ROOT / "distribution/screenshots/6.7-inch"
-REVIEW_REPLY = ROOT / "distribution/AppStoreReviewReply-May31-2026.txt"
+IPAD_DIR = ROOT / "distribution/screenshots/13-inch-iPad"
+REVIEW_REPLY = ROOT / "distribution/AppStoreReviewReply-Jun05-2026.txt"
+SCREENSHOT_FILENAMES = [
+    "01-learn-home.png",
+    "02-practice-lab.png",
+    "03-anatomy-labeling.png",
+    "04-collection-gallery.png",
+    "05-progress-dashboard.png",
+    "06-tutor-sessions.png",
+]
 
 SCREENSHOT_TYPES = [
     ("APP_IPHONE_67", IPHONE_DIR, (1290, 2796)),
-    ("APP_IPAD_PRO_3GEN_129", IPHONE_DIR, (2048, 2732)),
+    ("APP_IPAD_PRO_3GEN_129", IPAD_DIR, (2048, 2732)),
 ]
 
 
 def resolve_build_id(client: ASCClient, build_number: str) -> str:
     builds = client.get(
-        f"{API_V1}/apps/{DEFAULT_APP_ID}/builds?limit=20&sort=-uploadedDate"
+        f"{API_V1}/builds?filter[app]={APP_ID}&limit=50"
     )
     for item in builds.get("data", []):
         if item["attributes"].get("version") == build_number:
@@ -60,15 +72,49 @@ def resize_screenshot(src: Path, dest: Path, width: int, height: int) -> None:
     )
 
 
+def screenshot_has_size(src: Path, width: int, height: int) -> bool:
+    result = subprocess.run(
+        ["sips", "-g", "pixelWidth", "-g", "pixelHeight", str(src)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return f"pixelWidth: {width}" in result.stdout and f"pixelHeight: {height}" in result.stdout
+
+
+def ordered_screenshots(source_dir: Path) -> list[Path]:
+    sources = [source_dir / filename for filename in SCREENSHOT_FILENAMES]
+    missing = [str(path) for path in sources if not path.exists()]
+    if missing:
+        raise FileNotFoundError(
+            "Missing required App Store screenshots:\n" + "\n".join(missing)
+        )
+    return sources
+
+
+def delete_existing_screenshot_set(client: ASCClient, display_type: str) -> None:
+    existing = client.get(
+        f"{API_V1}/appStoreVersionLocalizations/{LOCALIZATION_ID}/appScreenshotSets?limit=50"
+    )
+    for item in existing.get("data", []):
+        if item.get("attributes", {}).get("screenshotDisplayType") != display_type:
+            continue
+        set_id = item["id"]
+        status, resp = client.delete(f"{API_V1}/appScreenshotSets/{set_id}")
+        if status not in (200, 204):
+            raise RuntimeError(f"Delete screenshot set {display_type} failed: {resp}")
+        print(f"  deleted existing {display_type} set {set_id}")
+
+
 def upload_listing_screenshots(client: ASCClient) -> None:
-    print("→ Uploading App Store listing screenshots (iPhone 6.7\" + iPad 12.9\")…")
-    sources = sorted(IPHONE_DIR.glob("*.png"))
-    if not sources:
-        raise FileNotFoundError(f"No screenshots in {IPHONE_DIR}")
+    print("→ Uploading App Store listing screenshots (iPhone 6.7\" + iPad 13\")…")
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        for display_type, _, (w, h) in SCREENSHOT_TYPES:
+        for display_type, source_dir, (w, h) in SCREENSHOT_TYPES:
+            sources = ordered_screenshots(source_dir)
+            delete_existing_screenshot_set(client, display_type)
+
             status, resp = client.post(
                 f"{API_V1}/appScreenshotSets",
                 {
@@ -91,10 +137,10 @@ def upload_listing_screenshots(client: ASCClient) -> None:
             set_id = resp["data"]["id"]
             print(f"  set {display_type}: {set_id}")
 
-            for idx, src in enumerate(sources[:6], start=1):
+            for idx, src in enumerate(sources, start=1):
                 img = src
-                if display_type.startswith("APP_IPAD"):
-                    img = tmp_path / f"ipad_{src.name}"
+                if not screenshot_has_size(src, w, h):
+                    img = tmp_path / f"{display_type.lower()}_{idx:02d}_{src.name}"
                     resize_screenshot(src, img, w, h)
 
                 status, resp = client.post(
@@ -135,7 +181,7 @@ def upload_listing_screenshots(client: ASCClient) -> None:
                 )
                 if status not in (200, 201):
                     raise RuntimeError(f"appScreenshots commit failed: {resp}")
-            print(f"  ✓ uploaded {len(sources[:6])} screenshots for {display_type}")
+            print(f"  ✓ uploaded {len(sources)} screenshots for {display_type}")
 
 
 def update_review_notes(client: ASCClient) -> None:
@@ -160,7 +206,7 @@ def update_review_notes(client: ASCClient) -> None:
 
 def cancel_blocking_submissions(client: ASCClient) -> None:
     """Cancel UNRESOLVED review submissions that lock the app version."""
-    subs = client.get(f"{API_V1}/apps/{DEFAULT_APP_ID}/reviewSubmissions")
+    subs = client.get(f"{API_V1}/apps/{APP_ID}/reviewSubmissions")
     for sub in subs.get("data", []):
         state = sub["attributes"]["state"]
         if state in ("UNRESOLVED_ISSUES", "READY_FOR_REVIEW"):
@@ -189,7 +235,7 @@ def submit_for_review(client: ASCClient) -> str:
             "data": {
                 "type": "reviewSubmissions",
                 "relationships": {
-                    "app": {"data": {"type": "apps", "id": DEFAULT_APP_ID}},
+                    "app": {"data": {"type": "apps", "id": APP_ID}},
                 },
             }
         },
@@ -230,7 +276,7 @@ def submit_for_review(client: ASCClient) -> str:
     )
     if status not in (200, 201):
         raise RuntimeError(f"Add app version failed: {resp}")
-    print("  ✓ app version added (IAP-free — no In-App Purchase products attached)")
+    print("  app version added")
 
     status, resp = client.patch(
         f"{API_V1}/reviewSubmissions/{submission_id}",
@@ -264,14 +310,16 @@ def main() -> int:
         if BUILD_NUMBER:
             build_id = wait_for_build(client, BUILD_NUMBER)
         else:
-            builds = client.get(f"{API_V1}/apps/{DEFAULT_APP_ID}/builds?limit=1&sort=-uploadedDate")
+            builds = client.get(f"{API_V1}/apps/{APP_ID}/builds?limit=1&sort=-uploadedDate")
             build_id = builds["data"][0]["id"]
+    elif os.environ.get("SKIP_IPA_UPLOAD") == "1" and BUILD_NUMBER:
+        build_id = wait_for_build(client, BUILD_NUMBER)
     elif CONFIG.get("buildId"):
         build_id = CONFIG["buildId"]
     elif BUILD_NUMBER:
         build_id = wait_for_build(client, BUILD_NUMBER, timeout_s=120)
     else:
-        builds = client.get(f"{API_V1}/apps/{DEFAULT_APP_ID}/builds?limit=1&sort=-uploadedDate")
+        builds = client.get(f"{API_V1}/apps/{APP_ID}/builds?limit=1&sort=-uploadedDate")
         build_id = builds["data"][0]["id"]
 
     attach_build(client, VERSION_ID, build_id)
@@ -279,7 +327,7 @@ def main() -> int:
     update_review_notes(client)
     submission_id = submit_for_review(client)
 
-    print(f"\n✅ IAP-free resubmission complete. Review submission: {submission_id}")
+    print(f"\nResubmission complete. Review submission: {submission_id}")
     print(f"   Build: {BUILD_NUMBER or build_id}")
     print(f"   Paste Resolution Center reply from: {REVIEW_REPLY}")
     return 0

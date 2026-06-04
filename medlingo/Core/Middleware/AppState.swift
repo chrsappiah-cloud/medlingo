@@ -51,6 +51,9 @@ final class AppState {
         if configuration.seedsExpiredToken {
             self.authService.seedExpiredSessionForTesting()
         }
+        if configuration.seedsAuthenticatedSession {
+            self.authService.seedAuthenticatedSessionForTesting()
+        }
     }
 
     func bootstrap() async {

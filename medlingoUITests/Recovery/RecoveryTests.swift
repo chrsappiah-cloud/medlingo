@@ -18,7 +18,7 @@ final class RecoveryTests: UITestCaseBase {
         launchApp(arguments: [UITestLaunchArguments.uiTestMode, UITestLaunchArguments.seedExpiredToken])
         tapTab("Account")
         XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Christopher"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Guest learner"].waitForExistence(timeout: 3))
     }
 
     @MainActor
