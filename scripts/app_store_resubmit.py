@@ -297,31 +297,145 @@ def submit_for_review(client: ASCClient) -> str:
     return submission_id
 
 
+def package_ipa_fallback(archive_path: Path, export_dir: Path, build_number: str) -> Path:
+    """Manual IPA packaging when xcodebuild -exportArchive rsync step fails (exit 70).
+
+    Copies the .app from the archive, embeds the App Store provisioning profile,
+    re-signs with the Apple Distribution certificate, and zips into an IPA.
+    This reproduces what xcodebuild -exportArchive does without the content-delivery step.
+    """
+    app_src = archive_path / "Products/Applications/medlingo.app"
+    if not app_src.exists():
+        raise FileNotFoundError(f"No .app in archive: {app_src}")
+
+    profiles_dir = Path.home() / "Library/Developer/Xcode/UserData/Provisioning Profiles"
+    dist_profile = _find_appstore_profile(profiles_dir, CONFIG["bundleId"])
+    if not dist_profile:
+        raise RuntimeError("No App Store provisioning profile found for wcs.medlingo")
+
+    staging = export_dir / "_ipa_staging"
+    payload = staging / "Payload"
+    payload.mkdir(parents=True, exist_ok=True)
+    app_dest = payload / "medlingo.app"
+
+    subprocess.run(["cp", "-R", str(app_src), str(app_dest)], check=True)
+    subprocess.run(["cp", str(dist_profile), str(app_dest / "embedded.mobileprovision")], check=True)
+
+    entitlements = ROOT / "build/ExportEntitlements.plist"
+    codesign_cmd = [
+        "codesign", "--force", "--sign",
+        "Apple Distribution: Christopher Appiah-Thompson (TM2WG7HH96)",
+        str(app_dest),
+    ]
+    if entitlements.exists():
+        codesign_cmd += ["--entitlements", str(entitlements)]
+    subprocess.run(codesign_cmd, check=True)
+
+    ipa_path = export_dir / "medlingo.ipa"
+    subprocess.run(
+        ["zip", "-r", str(ipa_path), "Payload/", "-x", "*.DS_Store"],
+        cwd=str(staging), check=True, capture_output=True,
+    )
+    print(f"  IPA packaged (fallback): {ipa_path} ({ipa_path.stat().st_size // 1024 // 1024}MB)")
+    return ipa_path
+
+
+def _find_appstore_profile(profiles_dir: Path, bundle_id: str) -> Path | None:
+    import plistlib
+    for f in profiles_dir.glob("*.mobileprovision"):
+        try:
+            result = subprocess.run(
+                ["security", "cms", "-D", "-i", str(f)],
+                capture_output=True, check=True,
+            )
+            plist = plistlib.loads(result.stdout)
+            entitlement_id = plist.get("Entitlements", {}).get("application-identifier", "")
+            has_devices = bool(plist.get("ProvisionedDevices"))
+            provisions_all = plist.get("ProvisionsAllDevices", False)
+            is_appstore = not has_devices and not provisions_all
+            if is_appstore and bundle_id in entitlement_id:
+                return f
+        except Exception:
+            continue
+    return None
+
+
+def build_and_package_ipa(build_number: str) -> Path:
+    """Archive, attempt export, fall back to manual packaging on rsync failure (exit 70)."""
+    archive_path = ROOT / f"build/medlingo-{build_number}.xcarchive"
+    export_dir = ROOT / f"build/export-{build_number}"
+    export_dir.mkdir(parents=True, exist_ok=True)
+    export_opts = ROOT / "build/ExportOptions.plist"
+
+    if not archive_path.exists():
+        print(f"→ Archiving build {build_number}…")
+        subprocess.run([
+            "xcodebuild", "archive",
+            "-project", str(ROOT / "medlingo.xcodeproj"),
+            "-scheme", "medlingo",
+            "-configuration", "Release",
+            "-archivePath", str(archive_path),
+            f"CURRENT_PROJECT_VERSION={build_number}",
+        ], check=True, capture_output=True)
+        print("  ✓ Archive succeeded")
+
+    ipa_path = export_dir / "medlingo.ipa"
+    if not ipa_path.exists():
+        print("→ Exporting IPA…")
+        result = subprocess.run([
+            "xcodebuild", "-exportArchive",
+            "-archivePath", str(archive_path),
+            "-exportOptionsPlist", str(export_opts),
+            "-exportPath", str(export_dir),
+            "-allowProvisioningUpdates",
+        ], capture_output=True)
+
+        if result.returncode != 0:
+            print(f"  xcodebuild -exportArchive failed (exit {result.returncode}); using fallback…")
+            ipa_path = package_ipa_fallback(archive_path, export_dir, build_number)
+        else:
+            print("  ✓ Export succeeded")
+
+    return ipa_path
+
+
+def set_export_compliance(client: ASCClient, build_id: str) -> None:
+    """Declare HTTPS-only encryption compliance. Required before submission."""
+    status, resp = client.patch(
+        f"{API_V1}/builds/{build_id}",
+        {"data": {"type": "builds", "id": build_id,
+                   "attributes": {"usesNonExemptEncryption": False}}}
+    )
+    if status not in (200, 201):
+        raise RuntimeError(f"Export compliance failed: {resp}")
+    print("✓ Export compliance set (usesNonExemptEncryption: false)")
+
+
 def main() -> int:
     issuer = os.environ.get("ASC_ISSUER_ID", DEFAULT_ISSUER)
     key_id = os.environ.get("ASC_KEY_ID", DEFAULT_KEY_ID)
     key_path = Path.home() / f".appstoreconnect/private_keys/AuthKey_{key_id}.p8"
     client = ASCClient(issuer, key_id, key_path)
 
-    ipa = ROOT / "build/export/medlingo.ipa"
-    if ipa.exists() and os.environ.get("SKIP_IPA_UPLOAD") != "1":
+    skip_upload = os.environ.get("SKIP_IPA_UPLOAD") == "1"
+
+    if not skip_upload:
+        if BUILD_NUMBER:
+            ipa = build_and_package_ipa(BUILD_NUMBER)
+        else:
+            ipa = ROOT / "build/export/medlingo.ipa"
         print(f"→ Uploading {ipa.name}…")
         upload_ipa(ipa, issuer, key_id, key_path)
-        if BUILD_NUMBER:
-            build_id = wait_for_build(client, BUILD_NUMBER)
-        else:
-            builds = client.get(f"{API_V1}/apps/{APP_ID}/builds?limit=1&sort=-uploadedDate")
-            build_id = builds["data"][0]["id"]
-    elif os.environ.get("SKIP_IPA_UPLOAD") == "1" and BUILD_NUMBER:
+
+    if BUILD_NUMBER:
         build_id = wait_for_build(client, BUILD_NUMBER)
     elif CONFIG.get("buildId"):
         build_id = CONFIG["buildId"]
-    elif BUILD_NUMBER:
-        build_id = wait_for_build(client, BUILD_NUMBER, timeout_s=120)
     else:
         builds = client.get(f"{API_V1}/apps/{APP_ID}/builds?limit=1&sort=-uploadedDate")
         build_id = builds["data"][0]["id"]
 
+    set_export_compliance(client, build_id)
     attach_build(client, VERSION_ID, build_id)
     upload_listing_screenshots(client)
     update_review_notes(client)
@@ -329,7 +443,7 @@ def main() -> int:
 
     print(f"\nResubmission complete. Review submission: {submission_id}")
     print(f"   Build: {BUILD_NUMBER or build_id}")
-    print(f"   Paste Resolution Center reply from: {REVIEW_REPLY}")
+    print(f"   Resolution Center reply: {REVIEW_REPLY}")
     return 0
 
 
