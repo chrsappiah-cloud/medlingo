@@ -2,7 +2,7 @@ Hello App Review team,
 
 Thank you for reviewing Medlingo. We investigated the sign-in error reported for Submission ID 6ccab951-fb09-4bfc-9b9f-6cedf945bda0 on iPad Air 11-inch (M3), iPadOS 26.5.
 
-We are submitting build 202606051735 to resolve this issue. The previous review notes said a demo account was not required, but the app still exposed a Sign In path. To prevent App Review from encountering backend-dependent sign-in errors, we corrected the review sign-in flow and now provide a dedicated App Review learner account.
+We submitted build 202606051735 to resolve this issue. The new review submission ID is 304324b3-9930-484c-81d0-5e81acd2fcd9, and App Store Connect shows the submission state as WAITING_FOR_REVIEW. The previous review notes said a demo account was not required, but the app still exposed a Sign In path. To prevent App Review from encountering backend-dependent sign-in errors, we corrected the review sign-in flow and now provide a dedicated App Review learner account.
 
 App Review credentials:
 Username: reviewer@medlingo.app
