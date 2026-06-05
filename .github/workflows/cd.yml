@@ -3,7 +3,7 @@ name: CD - Deploy to TestFlight
 # Runs only after CI succeeds on main, or via manual dispatch.
 on:
   workflow_run:
-    workflows: ["iOS CI"]
+    workflows: ["CI - Build & Test (ARC Shield)"]
     types: [completed]
     branches: [main]
   workflow_dispatch:

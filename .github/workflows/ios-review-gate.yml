@@ -72,13 +72,14 @@ jobs:
 
       - name: Build for simulator
         run: |
+          set -euo pipefail
           xcodebuild \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -destination "platform=iOS Simulator,name=$SIMULATOR,OS=$IOS_VERSION" \
             -configuration Debug \
             build \
-            | xcpretty || true
+            | xcpretty
 
   # ── 3. Review-path UI tests ───────────────────────────────────────────────
   review-path-tests:
@@ -99,6 +100,8 @@ jobs:
 
       - name: Run review-path tests
         run: |
+          set -euo pipefail
+          mkdir -p build/test-results
           xcodebuild test \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
@@ -108,7 +111,7 @@ jobs:
             -only-testing:medlingoUITests/SmokeTests \
             -only-testing:medlingoUITests/RecoveryTests \
             -resultBundlePath build/test-results/review-gate.xcresult \
-            | xcpretty --report junit --output build/test-results/review-gate.xml || true
+            | xcpretty --report junit --output build/test-results/review-gate.xml
           # xcpretty exits non-zero on test failure — check result bundle directly
           xcrun xcresulttool get --format json \
             --path build/test-results/review-gate.xcresult \

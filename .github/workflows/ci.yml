@@ -218,8 +218,9 @@ jobs:
               FAILED=1
             fi
           else
-            if [ "${{ needs.ui-tests.result }}" == "failure" ]; then
-              echo "::warning::UI Tests failed on feature branch — fix before merging to main"
+            if [ "${{ needs.ui-tests.result }}" != "success" ]; then
+              echo "::error::UI Tests failed or skipped on this branch"
+              FAILED=1
             fi
           fi
           if [ "$FAILED" -eq 1 ]; then exit 1; fi
