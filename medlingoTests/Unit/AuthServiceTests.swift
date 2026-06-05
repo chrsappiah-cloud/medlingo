@@ -39,6 +39,24 @@ struct AuthServiceTests {
         #expect(store.loadRefreshToken() == "fixture-refresh-token")
     }
 
+
+    @Test func signInWithEmail_whenAppReviewCredential_authenticatesWithoutBackend() async throws {
+        let mock = MockNetworkClient()
+        mock.requestHandler = { _ in
+            throw NetworkError.httpError(statusCode: 400, data: Data())
+        }
+        let store = InMemorySessionStore()
+        let sut = makeSUT(mock: mock, sessionStore: store)
+
+        try await sut.signInWithEmail(email: " REVIEWER@MEDLINGO.APP ", password: "Review2026!")
+
+        #expect(sut.isAuthenticated == true)
+        #expect(sut.currentUser?.email == "reviewer@medlingo.app")
+        #expect(sut.currentUser?.displayName == "Review Learner")
+        #expect(store.loadAccessToken() == "review-access-token")
+        #expect(store.loadRefreshToken() == "review-refresh-token")
+    }
+
     @Test func refreshSession_whenTokenMissing_throwsSessionExpired() async {
         let sut = makeSUT()
         await #expect(throws: AuthError.sessionExpired) {

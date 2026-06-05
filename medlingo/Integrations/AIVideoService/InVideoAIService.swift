@@ -94,10 +94,10 @@ final class InVideoAIService {
 
     init(
         client: NetworkClientProtocol? = nil,
-        launchConfiguration: AppLaunchConfiguration = .shared
+        launchConfiguration: AppLaunchConfiguration? = nil
     ) {
         self.functionsClient = client ?? SupabaseManager.shared.functionsClient
-        self.launchConfiguration = launchConfiguration
+        self.launchConfiguration = launchConfiguration ?? .shared
     }
 
     // MARK: - Generation

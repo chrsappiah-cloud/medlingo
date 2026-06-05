@@ -78,11 +78,11 @@ struct SignInView: View {
                                 .accessibilityIdentifier("sign-in-error-label")
                         }
 
-                        PrimaryButton(title: "Sign In", isLoading: isLoading) {
+                        PrimaryButton(title: "Sign In", action: {
                             signInWithEmail()
-                        }
+                        }, isLoading: isLoading)
                         .disabled(email.isEmpty || password.isEmpty || isLoading)
-                        .accessibilityIdentifier("sign-in-button")
+                        .accessibilityIdentifier("sign-in-submit-button")
                     }
 
                     // Divider

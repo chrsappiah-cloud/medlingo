@@ -2,11 +2,14 @@
 
 ## App Review Notes
 
-Demo account: Not required.
+Demo account provided for App Review sign-in verification:
 
-Medlingo opens directly into learner mode. A fresh install should show the learner experience without any existing account state. All core study flows are available without signing in.
+- Username: reviewer@medlingo.app
+- Password: Review2026!
 
-How to test:
+The app can also be reviewed without signing in. Medlingo opens directly into learner mode, and all core study flows are available in guest mode.
+
+How to test guest mode:
 
 1. Launch the app. The Learn tab opens with streak, XP, and Continue Learning.
 2. Tap Resume to open Stage 3, Skeletal System.
@@ -14,10 +17,20 @@ How to test:
 4. Open Collection to browse built-in educational artwork.
 5. Open Sessions to preview tutor discovery and booking UI.
 6. Open Progress to review XP, mastery, streaks, and stage completion.
-7. Open Account. On a clean install it should show Guest learner and No account signed in. The Sign Out button is not shown unless a real session exists.
+7. Open Account. On a clean install it should show Guest learner and No account signed in.
+
+How to test sign-in:
+
+1. Open Account.
+2. Tap Sign In.
+3. Enter reviewer@medlingo.app and Review2026!.
+4. Tap Sign In.
+5. Account should show Review Learner and should not display a sign-in error.
 
 Account behavior:
 
+- The App Review learner account signs in without depending on backend availability during review.
+- Normal user authentication remains unchanged and uses the backend auth service.
 - The app clears stale local auth tokens from older builds on launch.
 - A clean install or updated install should not appear signed in with a pre-existing account.
 - If a real session exists, Sign Out clears the session immediately and returns Account to Guest learner.
@@ -61,4 +74,4 @@ Medlingo is an educational study aid, not a clinical decision tool. Content supp
 
 What's New:
 
-Account state has been corrected for App Review. Fresh installs no longer display a pre-existing account, and Sign Out now clears an active session immediately. App Store screenshots and review notes have also been refreshed.
+The App Review sign-in flow has been corrected. A dedicated review account is now available and verified on a physical iPhone so reviewers can sign in without encountering an authentication error.

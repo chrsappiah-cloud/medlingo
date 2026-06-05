@@ -11,10 +11,10 @@ final class AppSyncCoordinator: SyncCoordinating {
     private let stalenessThreshold: TimeInterval
 
     init(
-        middleware: DataMiddleware = .shared,
+        middleware: DataMiddleware? = nil,
         stalenessThreshold: TimeInterval = 5 * 60
     ) {
-        self.middleware = middleware
+        self.middleware = middleware ?? .shared
         self.stalenessThreshold = stalenessThreshold
     }
 

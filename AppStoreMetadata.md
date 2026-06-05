@@ -37,7 +37,7 @@ medical terminology, medical vocabulary, nursing study, anatomy terms, medical s
 
 ## What's New
 
-Account state has been corrected for App Review. Fresh installs no longer display a pre-existing account, and Sign Out now clears an active session immediately. App Store screenshots and review notes have also been refreshed.
+The App Review sign-in flow has been corrected. A dedicated review account is now available and verified on a physical iPhone so reviewers can sign in without encountering an authentication error.
 
 ## App Review Information
 

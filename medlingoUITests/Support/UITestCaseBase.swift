@@ -84,7 +84,7 @@ class UITestCaseBase: XCTestCase {
     private func tapTopTabStrip(_ name: String) -> Bool {
         guard let coordinate = topTabCoordinate(for: name) else { return false }
         coordinate.tap()
-        return true
+        return waitForScreenSignal(named: name, timeout: 1.5)
     }
 
     @MainActor
@@ -113,5 +113,39 @@ class UITestCaseBase: XCTestCase {
         }
 
         return window.coordinate(withNormalizedOffset: CGVector(dx: x, dy: 0.04))
+    }
+
+    @MainActor
+    private func waitForScreenSignal(named name: String, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if screenSignalExists(named: name) {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        return screenSignalExists(named: name)
+    }
+
+    @MainActor
+    private func screenSignalExists(named name: String) -> Bool {
+        switch name {
+        case "Learn":
+            return app.staticTexts["Medlingo"].exists
+        case "Practice":
+            return app.navigationBars["Practice Lab"].exists || app.staticTexts["Practice Modes"].exists
+        case "Collection":
+            return app.navigationBars["Collection"].exists || app.staticTexts["Collection"].exists
+        case "Sessions":
+            return app.navigationBars["Sessions"].exists || app.staticTexts["Active Sessions"].exists
+        case "Progress":
+            return app.navigationBars["Progress"].exists || app.staticTexts["Weekly Focus"].exists
+        case "Account":
+            return app.navigationBars["Account"].exists
+                || app.staticTexts["Guest learner"].exists
+                || app.staticTexts["Review Learner"].exists
+        default:
+            return false
+        }
     }
 }

@@ -93,16 +93,18 @@ iPad dimensions: 2048 x 2732 px
 | First Name | Christopher |
 | Last Name | Appiah-Thompson |
 | Email | christopher.appiahthompson@myworldclass.org |
-| Sign-in required? | No |
-| Demo account username | Leave blank |
-| Demo account password | Leave blank |
+| Sign-in required? | No, but App Review credentials are provided |
+| Demo account username | reviewer@medlingo.app |
+| Demo account password | Review2026! |
 
 ### Notes
 
 ```text
-Demo account: Not required.
+Demo account provided for sign-in verification:
+Username: reviewer@medlingo.app
+Password: Review2026!
 
-Medlingo opens directly into learner mode. A fresh install should show the learner experience without any existing account state. All core study flows are available without signing in.
+Medlingo also opens directly into learner mode. A fresh install should show the learner experience without any existing account state. All core study flows are available without signing in.
 
 How to test:
 

@@ -29,7 +29,7 @@ final class DistributionScreenshotTests: XCTestCase {
 
         openLabelingFromPractice()
         capture(name: "03-anatomy-labeling", outputDir: outputDir)
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        navigateBackFromLabeling()
 
         tapTab("Collection")
         XCTAssertTrue(app.navigationBars["Collection"].waitForExistence(timeout: 5))
@@ -47,13 +47,57 @@ final class DistributionScreenshotTests: XCTestCase {
     @MainActor
     private func openLabelingFromPractice() {
         tapTab("Practice")
+        let labelingLink = app.buttons["practice-labeling-link"].firstMatch
+        if labelingLink.waitForExistence(timeout: 5), labelingLink.isHittable {
+            labelingLink.tap()
+        } else {
+            tapLabelingCardByCoordinate()
+        }
+
+        XCTAssertTrue(waitForLabelingScreen(timeout: 5), "Labeling screen did not open")
+    }
+
+    @MainActor
+    private func tapLabelingCardByCoordinate() {
         let labelingText = app.staticTexts["Labeling"]
         XCTAssertTrue(labelingText.waitForExistence(timeout: 5))
-        labelingText.tap()
+        let frame = labelingText.frame
+        let coordinate = app.coordinate(withNormalizedOffset: .zero).withOffset(
+            CGVector(dx: frame.midX, dy: frame.midY)
+        )
+        coordinate.tap()
+    }
 
-        if !app.navigationBars["Labeling"].waitForExistence(timeout: 3) {
-            app.staticTexts["Anatomy ID"].tap()
-            XCTAssertTrue(app.navigationBars["Labeling"].waitForExistence(timeout: 5))
+    @MainActor
+    private func waitForLabelingScreen(timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        let instruction = app.staticTexts["Select a label, then tap its region"]
+        let partialInstruction = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", "tap its region")
+        ).firstMatch
+        let scoreText = app.staticTexts["0/6"]
+
+        while Date() < deadline {
+            if app.navigationBars["Labeling"].exists || instruction.exists || partialInstruction.exists || scoreText.exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+
+        return false
+    }
+
+    @MainActor
+    private func navigateBackFromLabeling() {
+        let navBackButton = app.navigationBars.buttons.element(boundBy: 0)
+        if navBackButton.waitForExistence(timeout: 2) {
+            navBackButton.tap()
+            return
+        }
+
+        let practiceTab = app.buttons["Practice"].firstMatch
+        if practiceTab.waitForExistence(timeout: 2) {
+            practiceTab.tap()
         }
     }
 

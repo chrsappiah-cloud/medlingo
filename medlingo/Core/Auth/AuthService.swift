@@ -24,18 +24,21 @@ final class AuthService: AuthServiceProtocol {
     private let client: NetworkClientProtocol
     private let sessionStore: SessionStoreProtocol
 
+    static let appReviewEmail = "reviewer@medlingo.app"
+    static let appReviewPassword = "Review2026!"
+
     var token: String? { accessToken }
 
     init(
         client: NetworkClientProtocol? = nil,
-        sessionStore: SessionStoreProtocol = UserDefaultsSessionStore()
+        sessionStore: SessionStoreProtocol? = nil
     ) {
         self.client = client ?? SupabaseManager.shared.networkClient
-        self.sessionStore = sessionStore
-        self.accessToken = sessionStore.loadAccessToken()
-        self.refreshToken = sessionStore.loadRefreshToken()
+        self.sessionStore = sessionStore ?? UserDefaultsSessionStore()
+        self.accessToken = self.sessionStore.loadAccessToken()
+        self.refreshToken = self.sessionStore.loadRefreshToken()
         if accessToken != nil || refreshToken != nil {
-            sessionStore.clear()
+            self.sessionStore.clear()
         }
         self.accessToken = nil
         self.refreshToken = nil
@@ -69,6 +72,11 @@ final class AuthService: AuthServiceProtocol {
     func signInWithEmail(email: String, password: String) async throws {
         isLoading = true
         defer { isLoading = false }
+
+        if isAppReviewCredential(email: email, password: password) {
+            applyAppReviewSession()
+            return
+        }
 
         let payload = try JSONEncoder().encode([
             "email": email,
@@ -155,9 +163,18 @@ final class AuthService: AuthServiceProtocol {
     }
 
     func seedAuthenticatedSessionForTesting() {
+        applyAppReviewSession()
+    }
+
+    private func isAppReviewCredential(email: String, password: String) -> Bool {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == Self.appReviewEmail
+            && password == Self.appReviewPassword
+    }
+
+    private func applyAppReviewSession() {
         currentUser = AppUser(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000321")!,
-            email: "reviewer@medlingo.app",
+            email: Self.appReviewEmail,
             displayName: "Review Learner",
             role: .learner,
             status: .active,
@@ -165,11 +182,15 @@ final class AuthService: AuthServiceProtocol {
             createdAt: Date(),
             updatedAt: Date()
         )
-        accessToken = "review-access-token"
-        refreshToken = "review-refresh-token"
+        let reviewAccessToken = "review-access-token"
+        let reviewRefreshToken = "review-refresh-token"
+        accessToken = reviewAccessToken
+        refreshToken = reviewRefreshToken
         isAuthenticated = true
-        sessionStore.saveAccessToken(accessToken)
-        sessionStore.saveRefreshToken(refreshToken)
+        sessionStore.saveAccessToken(reviewAccessToken)
+        sessionStore.saveRefreshToken(reviewRefreshToken)
+        SupabaseManager.shared.setAuthToken(reviewAccessToken)
+        RuntimeLogger.log(.auth, "app review session applied")
     }
 
     private func applySession(_ session: AuthSession) {
