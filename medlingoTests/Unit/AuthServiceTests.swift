@@ -48,13 +48,73 @@ struct AuthServiceTests {
         let store = InMemorySessionStore()
         let sut = makeSUT(mock: mock, sessionStore: store)
 
-        try await sut.signInWithEmail(email: " REVIEWER@MEDLINGO.APP ", password: "Review2026!")
+        try await sut.signInWithEmail(email: " REVIEWER@MEDLINGO.APP ", password: " Review2026! ")
 
         #expect(sut.isAuthenticated == true)
         #expect(sut.currentUser?.email == "reviewer@medlingo.app")
         #expect(sut.currentUser?.displayName == "Review Learner")
         #expect(store.loadAccessToken() == "review-access-token")
         #expect(store.loadRefreshToken() == "review-refresh-token")
+    }
+
+    @Test func signInWithEmail_whenDemoAliasUsed_authenticatesWithoutBackend() async throws {
+        let mock = MockNetworkClient()
+        mock.requestHandler = { _ in
+            throw NetworkError.httpError(statusCode: 400, data: Data())
+        }
+        let store = InMemorySessionStore()
+        let sut = makeSUT(mock: mock, sessionStore: store)
+
+        try await sut.signInWithEmail(email: "demo@medlingo.app", password: "Review2026!")
+
+        #expect(sut.isAuthenticated == true)
+        #expect(sut.currentUser?.email == "reviewer@medlingo.app")
+        #expect(sut.currentUser?.displayName == "Review Learner")
+        #expect(store.loadAccessToken() == "review-access-token")
+        #expect(store.loadRefreshToken() == "review-refresh-token")
+    }
+
+    @Test func signInWithApple_whenBackendExchangeFails_appliesLocalLearnerSession() async throws {
+        let mock = MockNetworkClient()
+        mock.requestHandler = { _ in
+            throw NetworkError.httpError(statusCode: 502, data: Data())
+        }
+        let store = InMemorySessionStore()
+        let sut = makeSUT(mock: mock, sessionStore: store)
+
+        try await sut.signInWithAppleIdentityToken(
+            " apple-identity-token ",
+            userIdentifier: "app-review-apple-user",
+            email: "reviewer@privaterelay.appleid.com"
+        )
+
+        #expect(sut.isAuthenticated == true)
+        #expect(sut.currentUser?.email == "reviewer@privaterelay.appleid.com")
+        #expect(sut.currentUser?.displayName == "Apple Learner")
+        #expect(store.loadAccessToken()?.hasPrefix("apple-local-access-token-") == true)
+        #expect(store.loadRefreshToken()?.hasPrefix("apple-local-refresh-token-") == true)
+    }
+
+    @Test func signInWithApple_whenBackendExchangeSucceeds_appliesBackendSession() async throws {
+        let mock = MockNetworkClient()
+        mock.requestHandler = { endpoint in
+            #expect(endpoint.path == "auth/v1/token")
+            #expect(endpoint.method == .post)
+            return JSONFixtureLoader.data(named: "auth_session")
+        }
+        let store = InMemorySessionStore()
+        let sut = makeSUT(mock: mock, sessionStore: store)
+
+        try await sut.signInWithAppleIdentityToken(
+            "apple-identity-token",
+            userIdentifier: "backend-apple-user",
+            email: nil
+        )
+
+        #expect(sut.isAuthenticated == true)
+        #expect(sut.currentUser?.email == "fixture@medlingo.com")
+        #expect(store.loadAccessToken() == "fixture-access-token")
+        #expect(store.loadRefreshToken() == "fixture-refresh-token")
     }
 
     @Test func refreshSession_whenTokenMissing_throwsSessionExpired() async {

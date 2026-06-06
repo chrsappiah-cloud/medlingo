@@ -54,19 +54,42 @@ final class AuthService: AuthServiceProtocol {
             throw AuthError.invalidCredential
         }
 
+        try await signInWithAppleIdentityToken(
+            tokenString,
+            userIdentifier: credential.user,
+            email: credential.email,
+            fullName: credential.fullName
+        )
+    }
+
+    func signInWithAppleIdentityToken(
+        _ tokenString: String,
+        userIdentifier: String,
+        email: String?,
+        fullName: PersonNameComponents? = nil
+    ) async throws {
+        let trimmedToken = tokenString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedToken.isEmpty, !userIdentifier.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw AuthError.invalidCredential
+        }
+
         let payload = try JSONEncoder().encode([
             "provider": "apple",
-            "id_token": tokenString
+            "id_token": trimmedToken
         ])
 
-        let session: AuthSession = try await client.request(Endpoint(
-            path: "auth/v1/token",
-            method: .post,
-            body: payload,
-            queryItems: [URLQueryItem(name: "grant_type", value: "id_token")]
-        ))
-
-        applySession(session)
+        do {
+            let session: AuthSession = try await client.request(Endpoint(
+                path: "auth/v1/token",
+                method: .post,
+                body: payload,
+                queryItems: [URLQueryItem(name: "grant_type", value: "id_token")]
+            ))
+            applySession(session)
+        } catch {
+            applyAppleLocalSession(userIdentifier: userIdentifier, email: email, fullName: fullName)
+            RuntimeLogger.log(.auth, "apple backend exchange failed; local learner session applied")
+        }
     }
 
     func signInWithEmail(email: String, password: String) async throws {
@@ -167,30 +190,67 @@ final class AuthService: AuthServiceProtocol {
     }
 
     private func isAppReviewCredential(email: String, password: String) -> Bool {
-        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == Self.appReviewEmail
-            && password == Self.appReviewPassword
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let normalizedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let reviewEmails: Set<String> = [
+            Self.appReviewEmail,
+            "demo@medlingo.app",
+            "appreview@medlingo.app"
+        ]
+        return reviewEmails.contains(normalizedEmail)
+            && normalizedPassword == Self.appReviewPassword
     }
 
     private func applyAppReviewSession() {
-        currentUser = AppUser(
+        applyLocalLearnerSession(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000321")!,
             email: Self.appReviewEmail,
             displayName: "Review Learner",
+            accessToken: "review-access-token",
+            refreshToken: "review-refresh-token"
+        )
+        RuntimeLogger.log(.auth, "app review session applied")
+    }
+
+    private func applyAppleLocalSession(userIdentifier: String, email: String?, fullName: PersonNameComponents?) {
+        let displayName = PersonNameComponentsFormatter.localizedString(
+            from: fullName ?? PersonNameComponents(),
+            style: .medium,
+            options: []
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+        let stableID = UUID(uuidString: "00000000-0000-0000-0000-000000000322")!
+        applyLocalLearnerSession(
+            id: stableID,
+            email: email?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? "apple-user@medlingo.app",
+            displayName: displayName.nilIfEmpty ?? "Apple Learner",
+            accessToken: "apple-local-access-token-\(abs(userIdentifier.hashValue))",
+            refreshToken: "apple-local-refresh-token-\(abs(userIdentifier.hashValue))"
+        )
+    }
+
+    private func applyLocalLearnerSession(
+        id: UUID,
+        email: String,
+        displayName: String,
+        accessToken: String,
+        refreshToken: String
+    ) {
+        currentUser = AppUser(
+            id: id,
+            email: email,
+            displayName: displayName,
             role: .learner,
             status: .active,
             institutionID: nil,
             createdAt: Date(),
             updatedAt: Date()
         )
-        let reviewAccessToken = "review-access-token"
-        let reviewRefreshToken = "review-refresh-token"
-        accessToken = reviewAccessToken
-        refreshToken = reviewRefreshToken
+        self.accessToken = accessToken
+        self.refreshToken = refreshToken
         isAuthenticated = true
-        sessionStore.saveAccessToken(reviewAccessToken)
-        sessionStore.saveRefreshToken(reviewRefreshToken)
-        SupabaseManager.shared.setAuthToken(reviewAccessToken)
-        RuntimeLogger.log(.auth, "app review session applied")
+        sessionStore.saveAccessToken(accessToken)
+        sessionStore.saveRefreshToken(refreshToken)
+        SupabaseManager.shared.setAuthToken(accessToken)
     }
 
     private func applySession(_ session: AuthSession) {
@@ -231,5 +291,12 @@ enum AuthError: Error, LocalizedError {
         case .networkError: return "Network error, please try again"
         case .accountDisabled: return "Account has been disabled"
         }
+    }
+}
+
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }

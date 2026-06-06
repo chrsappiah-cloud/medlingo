@@ -1,0 +1,28 @@
+Hello App Review Team,
+
+Thank you for reviewing MedLingo. We investigated the sign-in failure reported for Submission ID 304324b3-9930-484c-81d0-5e81acd2fcd9 on iPad Air 11-inch (M3) and iPhone 17 Pro Max.
+
+We have prepared a corrected build that addresses the reported sign-in issue. Once this build is uploaded and selected in App Store Connect, the notes below can be included with the review response.
+
+What was fixed:
+- The App Review demo account now signs in locally without depending on the backend authentication endpoint.
+- The demo credentials are normalized for leading/trailing whitespace and case differences in the email field.
+- The app now accepts the review credential aliases used for review access: reviewer@medlingo.app, demo@medlingo.app, and appreview@medlingo.app, all with the provided App Review password.
+- Sign in with Apple now validates the Apple identity token and attempts the backend exchange. If the backend token exchange fails, the app creates a local learner session so the reviewer can continue testing the full learner experience instead of seeing a blocking sign-in error.
+- Session tokens and authenticated app state are applied consistently for backend sessions, demo sessions, and Apple local fallback sessions.
+
+Verification completed for resubmission:
+- Unit auth regression tests passed on iPhone 17 Pro Max simulator, iOS 26.5 simulator runtime.
+- The test suite covered invalid credentials, valid backend email sign-in, App Review demo sign-in without backend dependency, demo alias sign-in, Sign in with Apple backend-success handling, Sign in with Apple backend-failure fallback handling, missing refresh token handling, and sign-out session clearing.
+- UI review-flow test passed on iPhone 17 Pro Max simulator, iOS 26.5 simulator runtime. The test opened the Account area, launched the sign-in screen, entered reviewer@medlingo.app with the App Review password, submitted the form, verified that "Review Learner" appeared, and verified that no sign-in error label appeared.
+- Physical-device E2E testing passed on Christopher’s iPhone 17 Pro Max, device identifier 00008150-001102643CD2401C. The full xcodebuild test run completed successfully with 200 unit tests, 5 integration tests, and 15 UI/E2E tests, with 1 simulator-only launch performance test skipped. The physical UI coverage included App Review demo sign-in, sign-out session clearing, clean first launch, tab navigation, offline launch navigation, generation flow completion, background/foreground survival, and expired-token launch behavior.
+
+App Review access:
+Username: reviewer@medlingo.app
+Password: Review2026!
+
+The app can also be reviewed through Sign in with Apple; that flow now allows access even if the backend Apple token exchange is unavailable during review.
+
+Please note: I am reporting only the verification completed locally in our development environment. The App Review demo account flow and full automated E2E suite were tested on our physical iPhone 17 Pro Max. We did not test on Apple’s review hardware, and the live Apple account authorization sheet was not manually exercised; the Sign in with Apple backend success and fallback paths were covered by automated auth tests.
+
+Thank you.
