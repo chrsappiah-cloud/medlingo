@@ -26,7 +26,7 @@ BUILD_NUMBER = os.environ.get("BUILD_NUMBER", CONFIG.get("buildNumber", ""))
 LOCALIZATION_ID = "e3f09bbf-0a42-4e37-8511-77e47903dae5"
 IPHONE_DIR = ROOT / "distribution/screenshots/6.7-inch"
 IPAD_DIR = ROOT / "distribution/screenshots/13-inch-iPad"
-REVIEW_REPLY = ROOT / "distribution/AppStoreReviewReply-Jun05-2026.txt"
+REVIEW_REPLY = ROOT / "distribution/AppStoreReviewReply-Jun06-2026-SignIn.txt"
 SCREENSHOT_FILENAMES = [
     "01-learn-home.png",
     "02-practice-lab.png",
