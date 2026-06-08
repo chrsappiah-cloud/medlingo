@@ -113,7 +113,7 @@ jobs:
             -resultBundlePath build/test-results/review-gate.xcresult \
             | xcpretty --report junit --output build/test-results/review-gate.xml
           # xcpretty exits non-zero on test failure — check result bundle directly
-          xcrun xcresulttool get --format json \
+          xcrun xcresulttool get object --legacy --format json \
             --path build/test-results/review-gate.xcresult \
             | python3 -c "
           import json, sys

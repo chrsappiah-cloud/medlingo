@@ -211,7 +211,11 @@ struct TutorDiscoveryView: View {
                             LinearGradient(colors: [AppColor.gold.opacity(0.3), AppColor.emerald.opacity(0.2)], startPoint: .top, endPoint: .bottom)
                         )
                         .frame(width: 28, height: 28)
-                        .overlay(Text("D").font(.caption.bold()).foregroundColor(AppColor.gold))
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.caption.bold())
+                                .foregroundColor(AppColor.gold)
+                        )
                     Text("Dr. Sarah Mitchell")
                         .font(AppTypography.subheadline)
                         .foregroundColor(AppColor.textSecondary)
