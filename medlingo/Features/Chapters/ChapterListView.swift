@@ -97,15 +97,9 @@ struct StageRowCard: View {
 
             Spacer()
 
-            if chapter.isPremium {
-                Image(systemName: "lock.fill")
-                    .foregroundColor(AppColor.gold.opacity(0.6))
-                    .font(.caption)
-            } else {
-                Image(systemName: "chevron.right")
-                    .foregroundColor(AppColor.textTertiary)
-                    .font(.caption)
-            }
+            Image(systemName: "chevron.right")
+                .foregroundColor(AppColor.textTertiary)
+                .font(.caption)
         }
         .padding(AppSpacing.md)
         .background(AppColor.surface)
@@ -137,22 +131,22 @@ final class ChapterListViewModel {
     }
 
     private func loadSampleData() {
-        let sampleStages: [(String, String, Bool)] = [
-            ("Word Parts & Foundations", "Prefixes, roots, suffixes, combining forms", false),
-            ("Body Organization", "Anatomical orientation and body systems", false),
-            ("Integumentary System", "Skin, hair, nails, and disorders", false),
-            ("Skeletal System", "Bones, joints, and conditions", true),
-            ("Muscular System", "Muscles, movement, disorders", true),
-            ("Nervous System", "Brain, spinal cord, nerves", true),
-            ("Special Senses", "Eyes, ears, taste, touch", true),
-            ("Endocrine System", "Hormones and glands", true),
-            ("Cardiovascular System", "Heart and blood vessels", true),
-            ("Lymphatic & Immunity", "Immune system and defenses", true),
-            ("Respiratory System", "Lungs and breathing", true),
-            ("Digestive System", "GI tract and organs", true),
-            ("Urinary System", "Kidneys and excretion", true),
-            ("Reproductive System", "Male and female anatomy", true),
-            ("Clinical Applications", "Cross-system review", true),
+        let sampleStages: [(String, String)] = [
+            ("Word Parts & Foundations", "Prefixes, roots, suffixes, combining forms"),
+            ("Body Organization", "Anatomical orientation and body systems"),
+            ("Integumentary System", "Skin, hair, nails, and disorders"),
+            ("Skeletal System", "Bones, joints, and conditions"),
+            ("Muscular System", "Muscles, movement, disorders"),
+            ("Nervous System", "Brain, spinal cord, nerves"),
+            ("Special Senses", "Eyes, ears, taste, touch"),
+            ("Endocrine System", "Hormones and glands"),
+            ("Cardiovascular System", "Heart and blood vessels"),
+            ("Lymphatic & Immunity", "Immune system and defenses"),
+            ("Respiratory System", "Lungs and breathing"),
+            ("Digestive System", "GI tract and organs"),
+            ("Urinary System", "Kidneys and excretion"),
+            ("Reproductive System", "Male and female anatomy"),
+            ("Clinical Applications", "Cross-system review"),
         ]
 
         chapters = sampleStages.enumerated().map { index, data in
@@ -164,11 +158,10 @@ final class ChapterListViewModel {
                 title: data.0,
                 summary: data.1,
                 estimatedMinutes: Int.random(in: 45...90),
-                isPremium: data.2,
                 coverArtURL: nil,
                 accentColorHex: "",
                 prerequisiteIDs: [],
-                unlockRule: data.2 ? .premium : .free
+                unlockRule: .free
             )
         }
     }

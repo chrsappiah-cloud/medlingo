@@ -1,0 +1,182 @@
+name: iOS Review Gate
+
+# Blocks merges to main if review-path tests fail or if hardcoded user strings
+# or IAP references are detected — the two classes that caused Apple rejections
+# on 2026-06-04 (Guidelines 2.1a, 2.1b, 3.1.2c).
+#
+# For physical-device runs set DEVICE_UDID in repo secrets and add a self-hosted
+# runner with the device attached; otherwise tests run on the simulator.
+
+on:
+  push:
+    branches: [main, "fix/**", "release/**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ios-review-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SCHEME: medlingo
+  PROJECT: medlingo.xcodeproj
+  SIMULATOR: "CI iPhone MedLingo Review"
+
+jobs:
+  # ── 1. Static policy checks (fast, no Xcode needed) ──────────────────────
+  policy-checks:
+    name: Policy checks (2.1a / 2.1b / 3.1.2c)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for hardcoded user avatar strings
+        run: |
+          # Any Text("X") where X is a single uppercase letter in a View file
+          # is a sign of a hardcoded avatar initial — flag it.
+          if grep -rn 'Text("[A-Z]")' medlingo/Features/ medlingo/Core/ \
+               --include="*.swift" 2>/dev/null; then
+            echo "::error::Hardcoded single-letter Text() found — likely a personal avatar initial (Guideline 2.1a)"
+            exit 1
+          fi
+          echo "✓ No hardcoded avatar initials"
+
+      - name: Check for IAP / StoreKit references
+        run: |
+          if grep -rn 'import StoreKit\|SKProduct\|SKPayment\|SKRequest\|\.purchase\|paymentQueue' \
+               medlingo/ --include="*.swift" 2>/dev/null; then
+            echo "::error::StoreKit/IAP reference found (Guideline 2.1b / 3.1.2c)"
+            exit 1
+          fi
+          echo "✓ No IAP references"
+
+      - name: Check for paid-access UI strings
+        run: |
+          if grep -rn '"Upgrade"\|"Subscribe"\|"Unlock Premium"\|"Start Free Trial"\|"Restore Purchases"' \
+               medlingo/ --include="*.swift" 2>/dev/null; then
+            echo "::error::Paid-access UI string found (Guideline 2.1b)"
+            exit 1
+          fi
+          echo "✓ No paid-access UI strings"
+
+  # ── 2. Build ──────────────────────────────────────────────────────────────
+  build:
+    name: Build (Debug · Simulator)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build for simulator
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            build \
+            | xcpretty
+
+  # ── 3. Review-path UI tests ───────────────────────────────────────────────
+  review-path-tests:
+    name: Review-path UI tests
+    runs-on: macos-15
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Boot simulator
+        env:
+          CI_SIM_NAME: ${{ env.SIMULATOR }}
+        run: bash scripts/ci-prepare-simulator.sh
+
+      - name: Run review-path tests
+        run: |
+          set -euo pipefail
+          mkdir -p build/test-results
+          xcodebuild test \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "id=$SIM_ID" \
+            -configuration Debug \
+            -only-testing:medlingoUITests/ReviewFlowTests \
+            -only-testing:medlingoUITests/SmokeTests \
+            -only-testing:medlingoUITests/RecoveryTests \
+            -resultBundlePath build/test-results/review-gate.xcresult \
+            | xcpretty --report junit --output build/test-results/review-gate.xml
+          # xcpretty exits non-zero on test failure — check result bundle directly
+          xcrun xcresulttool get object --legacy --format json \
+            --path build/test-results/review-gate.xcresult \
+            | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          metrics = d.get('metrics', {})
+          failed = int(metrics.get('testsFailedCount', {}).get('_value', 0))
+          total  = int(metrics.get('testsCount',       {}).get('_value', 0))
+          print(f'Tests: {total - failed}/{total} passed')
+          sys.exit(1 if failed > 0 else 0)
+          "
+
+      - name: Upload result bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-gate-${{ github.sha }}
+          path: build/test-results/review-gate.xcresult
+          retention-days: 14
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ github.sha }}
+          path: build/test-results/review-gate.xml
+
+  # ── 4. Account state smoke (direct assertion, no simulator needed) ────────
+  account-state-check:
+    name: Account state assertions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guest display name must fall back to "Guest learner"
+        run: |
+          # displayName computed var must return the fallback string
+          if ! grep -n '"Guest learner"' medlingo/Features/Account/AccountView.swift; then
+            echo "::error::AccountView missing 'Guest learner' fallback text"
+            exit 1
+          fi
+
+      - name: displayEmail must fall back to "No account signed in"
+        run: |
+          if ! grep -n '"No account signed in"' medlingo/Features/Account/AccountView.swift; then
+            echo "::error::AccountView missing 'No account signed in' fallback text"
+            exit 1
+          fi
+
+      - name: Sign Out button must be gated on isAuthenticated
+        run: |
+          # The sign-out-button accessibility identifier must only appear inside
+          # an `if appState.authService.isAuthenticated` block.
+          python3 - <<'PYEOF'
+          import re, sys
+          src = open("medlingo/Features/Account/AccountView.swift").read()
+          # Find the line number of sign-out-button
+          lines = src.splitlines()
+          sign_out_line = next((i for i, l in enumerate(lines) if 'sign-out-button' in l), None)
+          if sign_out_line is None:
+              print("sign-out-button identifier not found — may have been removed")
+              sys.exit(0)
+          # Check that isAuthenticated appears in the 40 lines before it
+          context = "\n".join(lines[max(0, sign_out_line-40):sign_out_line])
+          if "isAuthenticated" not in context:
+              print("::error::sign-out-button is not guarded by isAuthenticated")
+              sys.exit(1)
+          print("✓ sign-out-button correctly gated on isAuthenticated")
+          PYEOF

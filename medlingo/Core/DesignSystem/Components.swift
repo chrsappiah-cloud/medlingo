@@ -251,7 +251,7 @@ struct TutorAvatarCard: View {
     let name: String
     let specialty: String
     let rating: Double
-    let pricePerHour: String
+    let availability: String
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
@@ -288,9 +288,9 @@ struct TutorAvatarCard: View {
                         .font(AppTypography.caption1)
                         .foregroundColor(AppColor.textSecondary)
                     Spacer()
-                    Text(pricePerHour)
+                    Text(availability)
                         .font(AppTypography.caption1)
-                        .foregroundColor(AppColor.gold)
+                        .foregroundColor(AppColor.emerald)
                         .fontWeight(.semibold)
                 }
             }

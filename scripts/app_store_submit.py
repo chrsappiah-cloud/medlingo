@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automate App Store Connect IAP setup, screenshots, binary upload, and version submission."""
+"""Shared App Store Connect helpers for Medlingo binary and version submission."""
 
 from __future__ import annotations
 
@@ -14,25 +14,16 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_ISSUER = "70c46c69-5d6d-438d-b300-31df2b93163a"
-DEFAULT_KEY_ID = "4B8M4ZHLMF"
-DEFAULT_APP_ID = "6766951084"
-BUNDLE_ID = "wcs.medlingo"
+CONFIG_PATH = ROOT / "config/app_store_connect.json"
+CONFIG = json.loads(CONFIG_PATH.read_text()) if CONFIG_PATH.exists() else {}
+DEFAULT_ISSUER = CONFIG.get("issuerId", "70c46c69-5d6d-438d-b300-31df2b93163a")
+DEFAULT_KEY_ID = CONFIG.get("keyId", "L3Q98J38HJ")
+DEFAULT_APP_ID = CONFIG.get("appId", "6766951084")
+DEFAULT_VERSION_ID = CONFIG.get("versionId", "f59c3cca-7268-4944-a5e2-6ba91c02a513")
+BUNDLE_ID = CONFIG.get("bundleId", "wcs.medlingo")
 API_V1 = "https://api.appstoreconnect.apple.com/v1"
 API_V2 = "https://api.appstoreconnect.apple.com/v2"
 LOCALE = "en-AU"
-
-PRODUCTS = {
-    "subscriptions": {
-        "6773959722": ("com.medlingo.premium.monthly", 9.99),
-        "6773959767": ("com.medlingo.premium.yearly", 79.99),
-    },
-    "inAppPurchases": {
-        "6773959277": ("com.medlingo.sessions.5pack", 4.99),
-        "6773959673": ("com.medlingo.sessions.10pack", 9.99),
-        "6773959856": ("com.medlingo.chapter.unlock", 2.99),
-    },
-}
 
 
 class ASCClient:
@@ -48,7 +39,7 @@ class ASCClient:
             {
                 "iss": self.issuer,
                 "iat": int(time.time()),
-                "exp": int(time.time()) + 1200,
+                "exp": int(time.time()) + 1190,
                 "aud": "appstoreconnect-v1",
             },
             self.private_key,
@@ -85,6 +76,16 @@ class ASCClient:
         except urllib.error.HTTPError as e:
             return e.code, json.loads(e.read().decode())
 
+    def delete(self, url: str) -> tuple[int, dict]:
+        req = urllib.request.Request(url, headers=self._headers(content_type=""), method="DELETE")
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                body = resp.read()
+                return resp.status, json.loads(body) if body else {}
+        except urllib.error.HTTPError as e:
+            body = e.read().decode()
+            return e.code, json.loads(body) if body else {}
+
     def upload_binary(self, upload_op: dict, file_path: Path) -> None:
         body = upload_op.get("requestBody", {})
         method = upload_op.get("method", "PUT")
@@ -96,78 +97,6 @@ class ASCClient:
         with urllib.request.urlopen(req, timeout=300) as resp:
             resp.read()
 
-    def upload_review_screenshot(self, resource_type: str, resource_id: str, image: Path) -> None:
-        if resource_type == "subscriptionAppStoreReviewScreenshots":
-            relationships = {
-                "subscription": {"data": {"type": "subscriptions", "id": resource_id}}
-            }
-        else:
-            relationships = {
-                "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": resource_id}}
-            }
-        status, resp = self.post(
-            f"{API_V1}/{resource_type}",
-            {
-                "data": {
-                    "type": resource_type,
-                    "attributes": {
-                        "fileName": image.name,
-                        "fileSize": image.stat().st_size,
-                    },
-                    "relationships": relationships,
-                }
-            },
-        )
-        if status not in (200, 201):
-            raise RuntimeError(f"Screenshot reservation failed: {resp}")
-
-        screenshot_id = resp["data"]["id"]
-        ops = resp["data"]["attributes"].get("uploadOperations", [])
-        if not ops:
-            included = resp.get("included", [])
-            for item in included:
-                ops = item.get("attributes", {}).get("uploadOperations", [])
-                if ops:
-                    break
-        if not ops:
-            raise RuntimeError(f"No upload operations for screenshot: {resp}")
-
-        self.upload_binary(ops[0], image)
-
-        status, resp = self.patch(
-            f"{API_V1}/{resource_type}/{screenshot_id}",
-            {
-                "data": {
-                    "type": resource_type,
-                    "id": screenshot_id,
-                    "attributes": {"uploaded": True},
-                }
-            },
-        )
-        if status not in (200, 201):
-            raise RuntimeError(f"Screenshot commit failed: {resp}")
-        print(f"  ✓ screenshot uploaded for {resource_id}")
-
-
-def capture_iap_screenshot() -> Path:
-    out = ROOT / "distribution/screenshots/iap"
-    out.mkdir(parents=True, exist_ok=True)
-    target = out / "premium-paywall.png"
-    env = os.environ.copy()
-    env["DISTRIBUTION_OUTPUT_DIR"] = str(out)
-    subprocess.run(
-        ["bash", str(ROOT / "scripts/capture-distribution-screenshots.sh")],
-        cwd=ROOT,
-        env=env,
-        check=True,
-    )
-    if not target.exists():
-        candidates = list(out.glob("iap-premium-paywall.png")) + list(out.glob("*.png"))
-        if not candidates:
-            raise FileNotFoundError("IAP screenshot not captured")
-        target = candidates[0]
-    return target
-
 
 def upload_ipa(ipa: Path, issuer: str, key_id: str, key_path: Path) -> None:
     cmd = [
@@ -178,7 +107,7 @@ def upload_ipa(ipa: Path, issuer: str, key_id: str, key_path: Path) -> None:
         "--apiIssuer", issuer,
         "--private-key", str(key_path),
     ]
-    print(f"→ Uploading {ipa} to TestFlight…")
+    print(f"Uploading {ipa} to TestFlight...")
     subprocess.run(cmd, check=True)
 
 
@@ -198,7 +127,7 @@ def update_review_notes(client: ASCClient, version_id: str, notes_path: Path) ->
     )
     if status not in (200, 201):
         raise RuntimeError(f"Review notes update failed: {resp}")
-    print("✓ App Review notes updated")
+    print("App Review notes updated")
 
 
 def attach_build(client: ASCClient, version_id: str, build_id: str) -> None:
@@ -216,71 +145,36 @@ def attach_build(client: ASCClient, version_id: str, build_id: str) -> None:
     )
     if status not in (200, 201):
         raise RuntimeError(f"Build attach failed: {resp}")
-    print(f"✓ Build {build_id} attached to version")
+    print(f"Build {build_id} attached to version")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Submit Medlingo to App Store Connect")
+    parser = argparse.ArgumentParser(description="Upload Medlingo binary and update review notes")
     parser.add_argument("--issuer", default=os.environ.get("ASC_ISSUER_ID", DEFAULT_ISSUER))
     parser.add_argument("--key-id", default=os.environ.get("ASC_KEY_ID", DEFAULT_KEY_ID))
-    parser.add_argument("--key-path", type=Path, default=Path.home() / f".appstoreconnect/private_keys/AuthKey_{DEFAULT_KEY_ID}.p8")
+    parser.add_argument("--key-path", type=Path)
     parser.add_argument("--ipa", type=Path, default=ROOT / "build/export/medlingo.ipa")
-    parser.add_argument("--screenshot", type=Path)
-    parser.add_argument("--skip-upload", action="store_true")
-    parser.add_argument("--skip-screenshots", action="store_true")
     parser.add_argument("--skip-binary", action="store_true")
+    parser.add_argument("--review-notes", type=Path, default=ROOT / "AppStoreReviewNotes.md")
     args = parser.parse_args()
 
-    client = ASCClient(args.issuer, args.key_id, args.key_path)
+    key_path = args.key_path or Path.home() / f".appstoreconnect/private_keys/AuthKey_{args.key_id}.p8"
+    client = ASCClient(args.issuer, args.key_id, key_path)
 
-    screenshot = args.screenshot
-    if not screenshot and not args.skip_screenshots:
-        print("→ Capturing IAP review screenshot…")
-        screenshot = capture_iap_screenshot()
-    elif screenshot is None:
-        screenshot = ROOT / "distribution/screenshots/iap/premium-paywall.png"
-
-    if not args.skip_screenshots:
-        if not screenshot.exists():
-            print(f"Missing screenshot: {screenshot}", file=sys.stderr)
+    if not args.skip_binary:
+        if not args.ipa.exists():
+            print(f"IPA not found at {args.ipa}; run scripts/distribute.sh first", file=sys.stderr)
             return 1
-        print(f"→ Uploading IAP review screenshot to all products ({screenshot})…")
-        for sub_id in PRODUCTS["subscriptions"]:
-            client.upload_review_screenshot("subscriptionAppStoreReviewScreenshots", sub_id, screenshot)
-        for iap_id in PRODUCTS["inAppPurchases"]:
-            client.upload_review_screenshot("inAppPurchaseAppStoreReviewScreenshots", iap_id, screenshot)
+        upload_ipa(args.ipa, args.issuer, args.key_id, key_path)
 
-    if not args.skip_binary and args.ipa.exists():
-        upload_ipa(args.ipa, args.issuer, args.key_id, args.key_path)
-    elif not args.skip_binary:
-        print(f"IPA not found at {args.ipa}; run scripts/distribute.sh first", file=sys.stderr)
+    if args.review_notes.exists():
+        update_review_notes(client, DEFAULT_VERSION_ID, args.review_notes)
 
-    version_id = "f59c3cca-7268-4944-a5e2-6ba91c02a513"
-    notes = ROOT / "docs/AppStoreReviewNotes.md"
-    if notes.exists():
-        review_block = notes.read_text()
-        if "App Review Notes (paste into App Store Connect)" in review_block:
-            review_block = review_block.split("App Review Notes (paste into App Store Connect)", 1)[1]
-            review_block = review_block.split("---", 1)[0].strip()
-        tmp = ROOT / "build/app_review_notes.txt"
-        tmp.parent.mkdir(parents=True, exist_ok=True)
-        tmp.write_text(review_block[:4000])
-        try:
-            update_review_notes(client, version_id, tmp)
-        except Exception as e:
-            print(f"Warning: review notes: {e}")
-
-    builds = client.get(f"{API_V1}/apps/{DEFAULT_APP_ID}/builds?limit=3")
+    builds = client.get(f"{API_V1}/apps/{DEFAULT_APP_ID}/builds?limit=1&sort=-uploadedDate")
     if builds.get("data"):
-        latest = builds["data"][0]["id"]
-        try:
-            attach_build(client, version_id, latest)
-        except Exception as e:
-            print(f"Warning: attach build: {e}")
+        attach_build(client, DEFAULT_VERSION_ID, builds["data"][0]["id"])
 
-    print("\n✅ Automation complete.")
-    print("Manual: App Store Connect → Version 1.0 → In-App Purchases → select all 5 products → Submit for Review")
-    print("Manual: Resolution Center → paste docs/AppStoreResolutionCenterReply-2.1b.txt")
+    print("Automation complete.")
     return 0
 
 

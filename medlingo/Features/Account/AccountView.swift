@@ -2,14 +2,14 @@ import SwiftUI
 
 struct AccountView: View {
     @Environment(AppState.self) private var appState
-    @State private var showSignOutAlert = false
     @State private var showDeleteAlert = false
+    @State private var signOutMessage: String?
+    @State private var showSignIn = false
 
     var body: some View {
         NavigationStack {
             List {
                 profileSection
-                subscriptionSection
                 preferencesSection
                 supportSection
                 dangerZone
@@ -19,14 +19,6 @@ struct AccountView: View {
             .background(AppColor.background)
             .navigationTitle("Account")
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .alert("Sign Out", isPresented: $showSignOutAlert) {
-                Button("Cancel", role: .cancel) {}
-                Button("Sign Out", role: .destructive) {
-                    Task { try? await appState.authService.signOut() }
-                }
-            } message: {
-                Text("Are you sure you want to sign out?")
-            }
             .alert("Delete Account", isPresented: $showDeleteAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) {
@@ -34,6 +26,20 @@ struct AccountView: View {
                 }
             } message: {
                 Text("This action is permanent and cannot be undone. All your data will be deleted.")
+            }
+            .alert(
+                "Account",
+                isPresented: Binding(
+                    get: { signOutMessage != nil },
+                    set: { if !$0 { signOutMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(signOutMessage ?? "")
+            }
+            .sheet(isPresented: $showSignIn) {
+                SignInView()
             }
         }
         .preferredColorScheme(.dark)
@@ -53,63 +59,33 @@ struct AccountView: View {
                         )
                         .frame(width: 56, height: 56)
                         .overlay(Circle().stroke(AppColor.gold.opacity(0.5), lineWidth: 1.5))
-                    Text("C")
-                        .font(AppTypography.title2)
-                        .foregroundColor(AppColor.gold)
+                    if appState.authService.isAuthenticated,
+                       let initial = appState.authService.currentUser?.displayName.first.map(String.init) {
+                        Text(initial)
+                            .font(AppTypography.title2)
+                            .foregroundColor(AppColor.gold)
+                    } else {
+                        Image(systemName: "person.fill")
+                            .font(AppTypography.title2)
+                            .foregroundColor(AppColor.gold)
+                    }
                 }
                 .shadow(color: AppColor.gold.opacity(0.3), radius: 6)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                    Text("Christopher")
+                    Text(displayName)
                         .font(AppTypography.headline)
                         .foregroundColor(AppColor.textPrimary)
-                    Text("christopher@email.com")
+                        .accessibilityIdentifier("account-display-name")
+                    Text(displayEmail)
                         .font(AppTypography.subheadline)
                         .foregroundColor(AppColor.textSecondary)
-                    HStack(spacing: AppSpacing.xxs) {
-                        Image(systemName: "crown.fill")
-                            .font(.caption2)
-                            .foregroundColor(AppColor.gold)
-                        Text("Premium")
-                            .font(AppTypography.caption1)
-                            .foregroundColor(AppColor.gold)
-                    }
+                        .accessibilityIdentifier("account-display-email")
                 }
             }
             .padding(.vertical, AppSpacing.xs)
             .listRowBackground(AppColor.surface)
         }
-    }
-
-    private var subscriptionSection: some View {
-        Section("Subscription") {
-            NavigationLink {
-                SubscriptionView()
-            } label: {
-                HStack {
-                    Label("Premium Plan", systemImage: "crown.fill")
-                        .foregroundColor(AppColor.textPrimary)
-                    Spacer()
-                    Text("Active")
-                        .font(AppTypography.caption1)
-                        .foregroundColor(AppColor.emerald)
-                }
-            }
-            .accessibilityIdentifier("premium-plan-link")
-            NavigationLink {
-                PurchaseHistoryView()
-            } label: {
-                Label("Purchase History", systemImage: "clock.arrow.circlepath")
-                    .foregroundColor(AppColor.textPrimary)
-            }
-            Button {
-                Task { try? await appState.storeKitService.restorePurchases() }
-            } label: {
-                Label("Restore Purchases", systemImage: "arrow.clockwise")
-                    .foregroundColor(AppColor.diamond)
-            }
-        }
-        .listRowBackground(AppColor.surface)
     }
 
     private var preferencesSection: some View {
@@ -158,21 +134,47 @@ struct AccountView: View {
 
     private var dangerZone: some View {
         Section {
-            Button {
-                showSignOutAlert = true
-            } label: {
-                Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                    .foregroundColor(AppColor.error)
-            }
-            .accessibilityIdentifier("sign-out-button")
-            Button {
-                showDeleteAlert = true
-            } label: {
-                Label("Delete Account", systemImage: "trash.fill")
-                    .foregroundColor(AppColor.error.opacity(0.7))
+            if appState.authService.isAuthenticated {
+                Button {
+                    Task {
+                        do {
+                            try await appState.authService.signOut()
+                            signOutMessage = "You have been signed out."
+                        } catch {
+                            signOutMessage = "Sign out could not be completed. Please try again."
+                        }
+                    }
+                } label: {
+                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        .foregroundColor(AppColor.error)
+                }
+                .accessibilityIdentifier("sign-out-button")
+
+                Button {
+                    showDeleteAlert = true
+                } label: {
+                    Label("Delete Account", systemImage: "trash.fill")
+                        .foregroundColor(AppColor.error.opacity(0.7))
+                }
+            } else {
+                Button {
+                    showSignIn = true
+                } label: {
+                    Label("Sign In", systemImage: "person.badge.key.fill")
+                        .foregroundColor(AppColor.diamond)
+                }
+                .accessibilityIdentifier("sign-in-button")
             }
         }
         .listRowBackground(AppColor.surface)
+    }
+
+    private var displayName: String {
+        appState.authService.currentUser?.displayName ?? "Guest learner"
+    }
+
+    private var displayEmail: String {
+        appState.authService.currentUser?.email ?? "No account signed in"
     }
 
     private var copyrightSection: some View {
@@ -196,34 +198,6 @@ struct AccountView: View {
 }
 
 // MARK: - Sub-screens
-
-struct PurchaseHistoryView: View {
-    var body: some View {
-        List {
-            ForEach(0..<3, id: \.self) { i in
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(["Premium Monthly", "Session Pack (5)", "Premium Monthly"][i])
-                            .font(AppTypography.subheadline)
-                            .foregroundColor(AppColor.textPrimary)
-                        Text(["May 6, 2026", "Apr 20, 2026", "Apr 6, 2026"][i])
-                            .font(AppTypography.caption2)
-                            .foregroundColor(AppColor.textTertiary)
-                    }
-                    Spacer()
-                    Text(["$9.99", "$24.99", "$9.99"][i])
-                        .font(AppTypography.subheadline)
-                        .foregroundColor(AppColor.gold)
-                }
-            }
-            .listRowBackground(AppColor.surface)
-        }
-        .scrollContentBackground(.hidden)
-        .background(AppColor.background)
-        .navigationTitle("Purchase History")
-        .preferredColorScheme(.dark)
-    }
-}
 
 struct NotificationsSettingsView: View {
     @State private var lessonReminders = true
@@ -303,7 +277,7 @@ struct HelpCenterView: View {
     var body: some View {
         List {
             Section("FAQ") {
-                FAQRow(question: "How do I unlock premium stages?", answer: "Subscribe to Premium or purchase individual stage packs from the subscription page.")
+                FAQRow(question: "Are all stages available?", answer: "Yes. All stages, lessons, and practice modes are included at no cost.")
                 FAQRow(question: "How do tutor sessions work?", answer: "Browse available tutors, book a session, and join via video call at the scheduled time.")
                 FAQRow(question: "Can I study offline?", answer: "Yes! Previously loaded stages and flashcards are cached locally for offline access.")
             }
@@ -383,203 +357,6 @@ struct FAQRow: View {
                     .foregroundColor(AppColor.textSecondary)
             }
         }
-    }
-}
-
-struct SubscriptionView: View {
-    @Environment(AppState.self) private var appState
-    @State private var isLoadingProducts = false
-    @State private var isPurchasing = false
-    @State private var purchaseError: String?
-    @State private var showErrorAlert = false
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: AppSpacing.lg) {
-                if isLoadingProducts {
-                    VStack(spacing: AppSpacing.sm) {
-                        ProgressView()
-                            .tint(AppColor.gold)
-                        Text("Loading plans...")
-                            .font(AppTypography.subheadline)
-                            .foregroundColor(AppColor.textSecondary)
-                    }
-                    .padding(.top, AppSpacing.xl)
-                }
-                if let purchaseError, !purchaseError.isEmpty, !isLoadingProducts {
-                    Text(purchaseError)
-                        .font(AppTypography.subheadline)
-                        .foregroundColor(AppColor.error)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, AppSpacing.md)
-                        .accessibilityIdentifier("subscription-load-error")
-                }
-                currentPlanCard
-                availablePlansSection
-                copyrightFooter
-            }
-            .padding(AppSpacing.md)
-        }
-        .background(AppColor.background)
-        .navigationTitle("Subscription")
-        .preferredColorScheme(.dark)
-        .alert("Purchase Error", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(purchaseError ?? "An unknown error occurred. Please try again.")
-        }
-        .task {
-            await loadProducts()
-        }
-        .onAppear {
-            RuntimeLogger.breadcrumb("subscription")
-        }
-    }
-
-    private func loadProducts() async {
-        if AppLaunchConfiguration.shared.storeKitScenario == .productsFailure {
-            purchaseError = "No subscription products are available at this time."
-            showErrorAlert = true
-            return
-        }
-
-        isLoadingProducts = true
-        defer { isLoadingProducts = false }
-        do {
-            let products = try await appState.storeKitService.loadProducts()
-            if products.isEmpty {
-                purchaseError = "No subscription products are available at this time."
-            }
-        } catch {
-            purchaseError = "Failed to load subscription plans: \(error.localizedDescription)"
-        }
-    }
-
-    private func purchaseProduct(_ productID: String) async {
-        guard !isPurchasing else { return }
-        isPurchasing = true
-        defer { isPurchasing = false }
-        do {
-            let result = try await appState.handlePurchase(productID: productID)
-            switch result {
-            case .success:
-                purchaseError = nil
-            case .pending:
-                purchaseError = "Purchase is pending. It will complete once processed."
-                showErrorAlert = true
-            case .cancelled:
-                purchaseError = nil
-            case .failed(let error):
-                purchaseError = error.localizedDescription
-                showErrorAlert = true
-            }
-        } catch {
-            purchaseError = error.localizedDescription
-            showErrorAlert = true
-        }
-    }
-
-    private var currentPlanCard: some View {
-        AppCard {
-            VStack(spacing: AppSpacing.sm) {
-                Image(systemName: "crown.fill")
-                    .font(.largeTitle)
-                    .foregroundColor(AppColor.gold)
-                    .shadow(color: AppColor.gold.opacity(0.6), radius: 8)
-                Text("Premium Monthly")
-                    .font(AppTypography.title2)
-                    .foregroundColor(AppColor.textPrimary)
-                Text("Renews June 6, 2026")
-                    .font(AppTypography.subheadline)
-                    .foregroundColor(AppColor.textSecondary)
-            }
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    private var availablePlansSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("Available Plans")
-                .font(AppTypography.title3)
-                .foregroundColor(AppColor.textPrimary)
-
-            PlanCard(
-                name: "Monthly",
-                price: "$9.99/mo",
-                features: ["Full stage library", "All practice modes", "Progress analytics", "Tutor messaging"],
-                isCurrentPlan: true,
-                onUpgrade: {},
-                isLoading: false
-            )
-            PlanCard(
-                name: "Yearly",
-                price: "$79.99/yr",
-                features: ["Everything in Monthly", "Save 33%", "5 free tutor sessions", "Priority support"],
-                isCurrentPlan: false,
-                onUpgrade: {
-                    Task { await purchaseProduct("com.medlingo.premium.yearly") }
-                },
-                isLoading: isPurchasing
-            )
-        }
-    }
-
-    private var copyrightFooter: some View {
-        Text(AppConstants.copyright)
-            .font(AppTypography.caption2)
-            .foregroundColor(AppColor.textTertiary)
-            .padding(.top, AppSpacing.lg)
-    }
-}
-
-struct PlanCard: View {
-    let name: String
-    let price: String
-    let features: [String]
-    let isCurrentPlan: Bool
-    let onUpgrade: () -> Void
-    let isLoading: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            HStack {
-                Text(name)
-                    .font(AppTypography.headline)
-                    .foregroundColor(AppColor.textPrimary)
-                Spacer()
-                Text(price)
-                    .font(AppTypography.title3)
-                    .foregroundStyle(AppColor.goldGradient)
-            }
-            ForEach(features, id: \.self) { feature in
-                HStack(spacing: AppSpacing.xs) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(AppColor.emerald)
-                        .font(.caption)
-                    Text(feature)
-                        .font(AppTypography.subheadline)
-                        .foregroundColor(AppColor.textSecondary)
-                }
-            }
-            if isCurrentPlan {
-                Text("Current Plan")
-                    .font(AppTypography.caption1)
-                    .foregroundColor(AppColor.gold)
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.xxs)
-                    .background(AppColor.gold.opacity(0.15))
-                    .clipShape(Capsule())
-            } else {
-                PrimaryButton(title: "Upgrade", action: onUpgrade, isLoading: isLoading)
-            }
-        }
-        .padding(AppSpacing.md)
-        .background(AppColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.lg)
-                .stroke(isCurrentPlan ? AppColor.gold.opacity(0.4) : Color.white.opacity(0.05), lineWidth: 1)
-        )
     }
 }
 

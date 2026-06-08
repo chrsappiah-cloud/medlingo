@@ -42,7 +42,6 @@ struct TutorProfile: Identifiable, Codable, Hashable {
     var bio: String
     var subjects: [String]
     var isVerified: Bool
-    var hourlyRateCents: Int
     var availabilityPolicy: String?
     var rating: Double
     var totalSessions: Int

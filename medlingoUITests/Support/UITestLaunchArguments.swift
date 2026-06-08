@@ -4,12 +4,10 @@ enum UITestLaunchArguments {
     static let uiTestMode = "-UITesting"
     static let offline = "-mockNetwork"
     static let offlineValue = "offline"
-    static let productsFailure = "-mockStoreKit"
-    static let productsFailureValue = "productsFailure"
     static let seedExpiredToken = "-seedExpiredToken"
+    static let seedAuthenticatedSession = "-seedAuthenticatedSession"
     static let seedCreatorRole = "-seedCreatorRole"
-    static let restoreSuccess = "-mockStoreKit"
-    static let restoreSuccessValue = "restoreSuccess"
+    static let initialTab = "-initialTab"
 
     static func standardSmoke() -> [String] { [uiTestMode] }
 
@@ -17,15 +15,11 @@ enum UITestLaunchArguments {
         [uiTestMode, offline, offlineValue]
     }
 
-    static func subscriptionProductsFailure() -> [String] {
-        [uiTestMode, productsFailure, productsFailureValue]
-    }
-
-    static func restorePurchasesSuccess() -> [String] {
-        [uiTestMode, restoreSuccess, restoreSuccessValue]
-    }
-
     static func aiVideoGeneration() -> [String] {
         [uiTestMode, seedCreatorRole, "-mockAIGeneration"]
+    }
+
+    static func accountLaunch() -> [String] {
+        [uiTestMode, initialTab, "Account"]
     }
 }

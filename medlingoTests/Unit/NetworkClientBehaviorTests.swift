@@ -22,7 +22,6 @@ struct NetworkClientBehaviorTests {
             title: "Foundations",
             summary: "s",
             estimatedMinutes: 30,
-            isPremium: false,
             coverArtURL: nil,
             accentColorHex: "fff",
             prerequisiteIDs: [],

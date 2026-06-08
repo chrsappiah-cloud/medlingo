@@ -5,10 +5,14 @@ final class SmokeTests: UITestCaseBase {
     @MainActor
     func testLaunch_navigatesMainTabsWithoutCrash() throws {
         launchApp()
-        XCTAssertTrue(app.tabBars.firstMatch.exists)
+
+        // iOS 26 changed the tab bar accessibility hierarchy — verify via button label.
+        let pred = NSPredicate(format: "label == 'Learn'")
+        XCTAssertTrue(app.buttons.matching(pred).firstMatch.waitForExistence(timeout: 10),
+                      "Learn tab should exist")
 
         for name in ["Learn", "Practice", "Collection", "Sessions"] {
-            XCTAssertTrue(app.tabBars.buttons[name].exists, "\(name) tab should exist")
+            XCTAssertTrue(tabIsReachable(name), "\(name) tab should be reachable")
         }
         XCTAssertTrue(tabIsReachable("Progress"))
         XCTAssertTrue(tabIsReachable("Account"))

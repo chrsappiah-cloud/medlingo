@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "requirements": [
+    {
+      "id": "AUTH-SIGNIN-001",
+      "feature": "Sign-in keeps learners recoverable after token refresh",
+      "risk": "high",
+      "layer": "contract",
+      "tests": ["AuthServiceTests.signInWithEmail_whenSessionValid_authenticatesAndPersistsTokens"],
+      "defects": [],
+      "releaseStatus": "accepted"
+    },
+    {
+      "id": "LEARN-PROGRESS-001",
+      "feature": "Learning progression remains deterministic offline",
+      "risk": "medium",
+      "layer": "flow",
+      "tests": ["DataMiddlewareTests.loadInitialData_whenChaptersFetchFails_usesFallback"],
+      "defects": [],
+      "releaseStatus": "accepted"
+    },
+    {
+      "id": "API-DECODING-001",
+      "feature": "API clients surface malformed payloads as decoding failures",
+      "risk": "high",
+      "layer": "boundary",
+      "tests": ["NetworkClientBehaviorTests.request_whenMalformedJSON_throwsDecodingError"],
+      "defects": [],
+      "releaseStatus": "accepted"
+    },
+    {
+      "id": "NETWORK-OFFLINE-001",
+      "feature": "Poor-network launch remains navigable",
+      "risk": "critical",
+      "layer": "risk",
+      "tests": ["ReviewFlowTests.testOfflineLaunch_appRemainsNavigable"],
+      "defects": [],
+      "releaseStatus": "watch"
+    },
+    {
+      "id": "RELEASE-SMOKE-001",
+      "feature": "Top learner journey reaches Learn and Practice",
+      "risk": "high",
+      "layer": "acceptance",
+      "tests": ["SmokeTests"],
+      "defects": [],
+      "releaseStatus": "accepted"
+    }
+  ]
+}

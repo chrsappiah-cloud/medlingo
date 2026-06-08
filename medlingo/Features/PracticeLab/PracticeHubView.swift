@@ -52,6 +52,7 @@ struct PracticeHubView: View {
                 NavigationLink(destination: LabelingView()) {
                     PracticeModeCard(icon: "figure.stand", title: "Labeling", subtitle: "Anatomy ID", color: AppColor.gold)
                 }
+                .accessibilityIdentifier("practice-labeling-link")
                 NavigationLink(destination: QuizView(exercise: nil)) {
                     PracticeModeCard(icon: "questionmark.circle.fill", title: "Quiz", subtitle: "Test knowledge", color: Color(hex: "FF6B9D"))
                 }

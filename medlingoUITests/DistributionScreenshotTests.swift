@@ -12,7 +12,9 @@ final class DistributionScreenshotTests: XCTestCase {
         app.launch()
     }
 
-    private static let stagingDirectory = "/tmp/medlingo-distribution-screenshots"
+    private static var defaultOutputDirectory: String {
+        NSTemporaryDirectory() + "medlingo-distribution-screenshots"
+    }
 
     @MainActor
     func testCaptureDistributionScreenshots() throws {
@@ -27,7 +29,7 @@ final class DistributionScreenshotTests: XCTestCase {
 
         openLabelingFromPractice()
         capture(name: "03-anatomy-labeling", outputDir: outputDir)
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        navigateBackFromLabeling()
 
         tapTab("Collection")
         XCTAssertTrue(app.navigationBars["Collection"].waitForExistence(timeout: 5))
@@ -40,95 +42,92 @@ final class DistributionScreenshotTests: XCTestCase {
         tapTab("Sessions")
         XCTAssertTrue(app.staticTexts["Available Tutors"].waitForExistence(timeout: 5))
         capture(name: "06-tutor-sessions", outputDir: outputDir)
-
-        tapTab("Learn")
-        XCTAssertTrue(app.staticTexts["Medlingo"].waitForExistence(timeout: 5))
-
-        capturePremiumPaywallForIAPReview(outputDir: outputDir)
-    }
-
-    /// App Review screenshot for In-App Purchase products (Account → Premium Plan).
-    @MainActor
-    private func capturePremiumPaywallForIAPReview(outputDir: String) {
-        openAccountTab()
-        let premiumPlan = app.staticTexts["Premium Plan"]
-        if !premiumPlan.waitForExistence(timeout: 5) {
-            let premiumLabel = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'Premium'")).firstMatch
-            XCTAssertTrue(premiumLabel.waitForExistence(timeout: 5), "Premium Plan entry not found")
-            premiumLabel.tap()
-        } else {
-            premiumPlan.tap()
-        }
-        XCTAssertTrue(app.navigationBars["Subscription"].waitForExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["Available Plans"].waitForExistence(timeout: 8))
-        capture(name: "iap-premium-paywall", outputDir: outputDir)
-    }
-
-    @MainActor
-    private func openAccountTab() {
-        tapTab("Account")
-        if app.navigationBars["Account"].waitForExistence(timeout: 3) { return }
-        tapTab("More")
-        let account = app.buttons["Account"]
-        if account.waitForExistence(timeout: 3) {
-            account.tap()
-            return
-        }
-        app.staticTexts["Account"].tap()
     }
 
     @MainActor
     private func openLabelingFromPractice() {
         tapTab("Practice")
+        let labelingLink = app.buttons["practice-labeling-link"].firstMatch
+        if labelingLink.waitForExistence(timeout: 5), labelingLink.isHittable {
+            labelingLink.tap()
+        } else {
+            tapLabelingCardByCoordinate()
+        }
+
+        XCTAssertTrue(waitForLabelingScreen(timeout: 5), "Labeling screen did not open")
+    }
+
+    @MainActor
+    private func tapLabelingCardByCoordinate() {
         let labelingText = app.staticTexts["Labeling"]
         XCTAssertTrue(labelingText.waitForExistence(timeout: 5))
-        labelingText.tap()
+        let frame = labelingText.frame
+        let coordinate = app.coordinate(withNormalizedOffset: .zero).withOffset(
+            CGVector(dx: frame.midX, dy: frame.midY)
+        )
+        coordinate.tap()
+    }
 
-        if !app.navigationBars["Labeling"].waitForExistence(timeout: 3) {
-            app.staticTexts["Anatomy ID"].tap()
-            XCTAssertTrue(app.navigationBars["Labeling"].waitForExistence(timeout: 5))
+    @MainActor
+    private func waitForLabelingScreen(timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        let instruction = app.staticTexts["Select a label, then tap its region"]
+        let partialInstruction = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", "tap its region")
+        ).firstMatch
+        let scoreText = app.staticTexts["0/6"]
+
+        while Date() < deadline {
+            if app.navigationBars["Labeling"].exists || instruction.exists || partialInstruction.exists || scoreText.exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+
+        return false
+    }
+
+    @MainActor
+    private func navigateBackFromLabeling() {
+        let navBackButton = app.navigationBars.buttons.element(boundBy: 0)
+        if navBackButton.waitForExistence(timeout: 2) {
+            navBackButton.tap()
+            return
+        }
+
+        let practiceTab = app.buttons["Practice"].firstMatch
+        if practiceTab.waitForExistence(timeout: 2) {
+            practiceTab.tap()
         }
     }
 
     @MainActor
     private func tapTab(_ name: String) {
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        if tapTopTabStrip(name) { return }
 
-        let directTab = tabBar.buttons[name]
-        if directTab.waitForExistence(timeout: 5) {
-            if directTab.isHittable {
-                directTab.tap()
-                return
-            }
-            tabBar.swipeLeft()
-            if directTab.isHittable {
-                directTab.tap()
-                return
-            }
-            tabBar.swipeRight()
-            tabBar.swipeRight()
-            if directTab.isHittable {
-                directTab.tap()
-                return
-            }
-            directTab.tap()
+        // iOS 26+: tab bar uses a different accessibility container — broad button search.
+        let labelPred = NSPredicate(format: "label == %@", name)
+        let anyButton = app.buttons.matching(labelPred).firstMatch
+        if anyButton.waitForExistence(timeout: 8) {
+            anyButton.tap()
             return
         }
 
-        let more = tabBar.buttons["More"]
-        if more.waitForExistence(timeout: 2) {
-            more.tap()
-            let menuItems = [
-                app.buttons[name],
-                app.staticTexts[name],
-                app.cells[name],
-                app.cells.containing(NSPredicate(format: "label CONTAINS[c] %@", name)).firstMatch,
-            ]
-            for item in menuItems {
-                if item.waitForExistence(timeout: 2) {
-                    item.tap()
-                    return
+        // Legacy iOS tab bar fallback.
+        let tabBar = app.tabBars.firstMatch
+        if tabBar.waitForExistence(timeout: 3) {
+            let directTab = tabBar.buttons[name]
+            if directTab.waitForExistence(timeout: 3), directTab.isHittable {
+                directTab.tap()
+                return
+            }
+            let more = tabBar.buttons["More"]
+            if more.waitForExistence(timeout: 2) {
+                more.tap()
+                for item in [app.buttons[name], app.staticTexts[name],
+                             app.cells[name],
+                             app.cells.containing(NSPredicate(format: "label CONTAINS[c] %@", name)).firstMatch] {
+                    if item.waitForExistence(timeout: 2) { item.tap(); return }
                 }
             }
         }
@@ -136,12 +135,36 @@ final class DistributionScreenshotTests: XCTestCase {
         XCTFail("Tab '\(name)' not found in tab bar or More menu")
     }
 
+    @MainActor
+    private func tapTopTabStrip(_ name: String) -> Bool {
+        let window = app.windows.firstMatch
+        guard window.waitForExistence(timeout: 1), window.frame.width > 700 else {
+            return false
+        }
+
+        let xOffsets: [String: CGFloat] = [
+            "Learn": 0.25,
+            "Practice": 0.33,
+            "Collection": 0.44,
+            "Sessions": 0.55,
+            "Progress": 0.66,
+            "Account": 0.77,
+        ]
+
+        guard let x = xOffsets[name] else {
+            return false
+        }
+
+        window.coordinate(withNormalizedOffset: CGVector(dx: x, dy: 0.04)).tap()
+        return true
+    }
+
     private static func resolveOutputDirectory() -> String {
         if let env = ProcessInfo.processInfo.environment["DISTRIBUTION_OUTPUT_DIR"],
            !env.isEmpty {
             return env
         }
-        return stagingDirectory
+        return defaultOutputDirectory
     }
 
     private func capture(name: String, outputDir: String) {

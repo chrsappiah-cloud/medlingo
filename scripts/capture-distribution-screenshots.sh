@@ -1,17 +1,38 @@
 #!/usr/bin/env bash
-# Capture App Store screenshots (6.7" / 1290×2796) via UI tests on iPhone Pro Max simulator.
+# Capture App Store screenshots via UI tests.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-OUTPUT_DIR="${DISTRIBUTION_OUTPUT_DIR:-$ROOT/distribution/screenshots/6.7-inch}"
-SIM_NAME="${SIMULATOR_NAME:-iPhone 17 Pro Max}"
+DEVICE_FAMILY="${DISTRIBUTION_DEVICE_FAMILY:-iphone}"
+case "$DEVICE_FAMILY" in
+  iphone)
+    DEFAULT_OUTPUT_DIR="$ROOT/distribution/screenshots/6.7-inch"
+    DEFAULT_SIM_NAME="iPhone 17 Pro Max"
+    TARGET_WIDTH=1290
+    TARGET_HEIGHT=2796
+    ;;
+  ipad)
+    DEFAULT_OUTPUT_DIR="$ROOT/distribution/screenshots/13-inch-iPad"
+    DEFAULT_SIM_NAME="iPad Pro 13-inch (M5)"
+    TARGET_WIDTH=2048
+    TARGET_HEIGHT=2732
+    ;;
+  *)
+    echo "Unsupported DISTRIBUTION_DEVICE_FAMILY '$DEVICE_FAMILY'. Use 'iphone' or 'ipad'." >&2
+    exit 1
+    ;;
+esac
+
+OUTPUT_DIR="${DISTRIBUTION_OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
+SIM_NAME="${SIMULATOR_NAME:-$DEFAULT_SIM_NAME}"
 SCHEME="medlingo"
 PROJECT="medlingo.xcodeproj"
 
-STAGING="/tmp/medlingo-distribution-screenshots"
+STAGING="/tmp/medlingo-distribution-screenshots-$DEVICE_FAMILY"
 mkdir -p "$OUTPUT_DIR"
+find "$OUTPUT_DIR" -maxdepth 1 -type f -name '*.png' -delete
 rm -rf "$STAGING"
 mkdir -p "$STAGING"
 
@@ -23,7 +44,7 @@ xcodebuild -downloadPlatform iOS >/dev/null 2>&1 || true
 
 SIM_ID="$(xcrun simctl list devices available | grep "$SIM_NAME (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')"
 if [[ -z "$SIM_ID" ]]; then
-  echo "No simulator named '$SIM_NAME' found. Set SIMULATOR_NAME to a Pro Max device." >&2
+  echo "No simulator named '$SIM_NAME' found. Set SIMULATOR_NAME to an available $DEVICE_FAMILY simulator." >&2
   exit 1
 fi
 
@@ -44,7 +65,7 @@ xcodebuild test \
   -destination "platform=iOS Simulator,id=$SIM_ID" \
   -derivedDataPath "$DERIVED" \
   -only-testing:medlingoUITests/DistributionScreenshotTests/testCaptureDistributionScreenshots \
-  2>&1 | tee "$DERIVED/xcodebuild-test.log" | xcpretty --color 2>/dev/null || cat "$DERIVED/xcodebuild-test.log"
+  2>&1 | tee "$DERIVED/xcodebuild-test.log"
 TEST_EXIT=${PIPESTATUS[0]}
 set -e
 
@@ -56,49 +77,37 @@ else
   echo "→ Attempting to extract screenshots from xcresult attachments…"
   XCRESULT="$(find "$DERIVED/Logs/Test" -name '*.xcresult' -type d 2>/dev/null | sort | tail -1)"
   if [[ -n "$XCRESULT" ]]; then
-  python3 - "$XCRESULT" "$OUTPUT_DIR" <<'PY'
-import json, os, subprocess, sys
-xcresult, out_dir = sys.argv[1], sys.argv[2]
-raw = subprocess.check_output(
-    ["xcrun", "xcresulttool", "get", "test-results", "tests", "--path", xcresult, "--format", "json"],
-    text=True,
-)
-data = json.loads(raw)
-attachments = []
-def walk(node):
-    if isinstance(node, dict):
-        for item in node.get("attachments", []) or []:
-            attachments.append(item)
-        for value in node.values():
-            walk(value)
-    elif isinstance(node, list):
-        for item in node:
-            walk(item)
-walk(data)
-for item in attachments:
-    ref = item.get("payloadRef") or item.get("payloadReference") or {}
-    ref_id = ref.get("id")
-    if isinstance(ref_id, dict):
-        ref_id = ref_id.get("_value")
-    name = item.get("name")
-    if isinstance(name, dict):
-        name = name.get("_value")
-    name = name or "screenshot"
-    if not ref_id:
-        continue
-    dest = os.path.join(out_dir, f"{name}.png")
-    subprocess.run(
-        ["xcrun", "xcresulttool", "export", "attachments", "--path", xcresult, "--output-path", dest, "--id", ref_id],
-        check=False,
-    )
+    EXTRACTED="$STAGING/xcattachments"
+    mkdir -p "$EXTRACTED"
+    xcrun xcresulttool export attachments --path "$XCRESULT" --output-path "$EXTRACTED" >/dev/null || true
+    python3 - "$EXTRACTED" "$OUTPUT_DIR" <<'PY'
+import json, shutil, sys
+from pathlib import Path
+
+src_dir = Path(sys.argv[1])
+out_dir = Path(sys.argv[2])
+manifest = src_dir / "manifest.json"
+if not manifest.exists():
+    raise SystemExit(0)
+
+for suite in json.loads(manifest.read_text()):
+    for attachment in suite.get("attachments", []):
+        exported = attachment.get("exportedFileName", "")
+        suggested = attachment.get("suggestedHumanReadableName", "")
+        if not exported.endswith(".png") or not suggested[:2].isdigit():
+            continue
+        name = suggested.split("_0_", 1)[0]
+        if not name.endswith(".png"):
+            name += ".png"
+        shutil.copy2(src_dir / exported, out_dir / name)
 PY
   fi
 fi
 
 if compgen -G "$OUTPUT_DIR/*.png" >/dev/null; then
-  echo "→ Resizing screenshots to App Store 6.7\" size (1290×2796)…"
+  echo "→ Resizing screenshots to App Store size (${TARGET_WIDTH}×${TARGET_HEIGHT})…"
   for png in "$OUTPUT_DIR"/*.png; do
-    sips -z 2796 1290 "$png" >/dev/null
+    sips -z "$TARGET_HEIGHT" "$TARGET_WIDTH" "$png" >/dev/null
   done
 fi
 
@@ -110,4 +119,7 @@ if compgen -G "$OUTPUT_DIR/*.png" >/dev/null; then
 fi
 
 echo "No screenshots captured." >&2
-exit "${TEST_EXIT:-1}"
+if [[ "${TEST_EXIT:-0}" -eq 0 ]]; then
+  exit 1
+fi
+exit "$TEST_EXIT"

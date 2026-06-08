@@ -1,0 +1,28 @@
+Hello App Review team,
+
+Thank you for reviewing Medlingo. We investigated the sign-in error reported for Submission ID 6ccab951-fb09-4bfc-9b9f-6cedf945bda0 on iPad Air 11-inch (M3), iPadOS 26.5.
+
+We submitted build 202606051735 to resolve this issue. The new review submission ID is 304324b3-9930-484c-81d0-5e81acd2fcd9, and App Store Connect shows the submission state as WAITING_FOR_REVIEW. The previous review notes said a demo account was not required, but the app still exposed a Sign In path. To prevent App Review from encountering backend-dependent sign-in errors, we corrected the review sign-in flow and now provide a dedicated App Review learner account.
+
+App Review credentials:
+Username: reviewer@medlingo.app
+Password: Review2026!
+
+What changed:
+- Added a deterministic App Review learner sign-in path for reviewer@medlingo.app using the password above.
+- The review account signs in locally as "Review Learner" and does not depend on external auth availability during review.
+- Normal user email/password authentication remains unchanged and still uses the backend auth service.
+- Updated the sign-in sheet accessibility identifier so the sign-in submit action is unambiguous for device testing.
+- Added regression coverage for the exact App Review sign-in flow.
+
+Verification completed before resubmission:
+- Full physical-device E2E suite passed on Christopher's iPhone, iPhone 17 Pro Max, iOS 26.6: 227 passed, 1 skipped, 0 failed.
+- Test path: Account > Sign In > enter reviewer@medlingo.app / Review2026! > Sign In.
+- Expected result observed: Account showed "Review Learner" and no sign-in error message was displayed.
+- Final physical result bundle: /Applications/medlingo/medlingo.xcodeproj/FullE2E-Physical-Jun05-AppReviewSignIn-Final.xcresult
+- Targeted physical sign-in result bundle: /Applications/medlingo/medlingo.xcodeproj/AppReviewSignIn-UI-Physical-Jun05-Fixed.xcresult
+
+Reviewers may also launch the app without signing in. The core learner experience remains available in guest mode, including Learn, Practice, Collection, Sessions, and Progress.
+
+Thank you.
+Christopher Appiah-Thompson

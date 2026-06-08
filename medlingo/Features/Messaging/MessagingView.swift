@@ -43,7 +43,7 @@ struct MessagingView: View {
                 let session = TutorSession(
                     id: UUID(), tutorID: recipientID, title: "Call with \(recipientName)",
                     description: nil, startsAt: Date(), durationMinutes: 30,
-                    priceCents: 0, seatsAvailable: 2, seatsBooked: 1,
+                    seatsAvailable: 2, seatsBooked: 1,
                     chapterIDs: [], status: .live
                 )
                 SessionRoomView(session: session, roomURL: url, token: token)

@@ -181,7 +181,7 @@ struct TutorDiscoveryView: View {
         let nextSession = middleware.sessions.first ?? TutorSession(
             id: UUID(), tutorID: UUID(), title: "Cardiovascular Terminology Review",
             description: "Deep dive into cardio terms", startsAt: Date().addingTimeInterval(7200),
-            durationMinutes: 45, priceCents: 4500, seatsAvailable: 10, seatsBooked: 3,
+            durationMinutes: 45, seatsAvailable: 10, seatsBooked: 3,
             chapterIDs: [], status: .scheduled
         )
 
@@ -211,7 +211,11 @@ struct TutorDiscoveryView: View {
                             LinearGradient(colors: [AppColor.gold.opacity(0.3), AppColor.emerald.opacity(0.2)], startPoint: .top, endPoint: .bottom)
                         )
                         .frame(width: 28, height: 28)
-                        .overlay(Text("D").font(.caption.bold()).foregroundColor(AppColor.gold))
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.caption.bold())
+                                .foregroundColor(AppColor.gold)
+                        )
                     Text("Dr. Sarah Mitchell")
                         .font(AppTypography.subheadline)
                         .foregroundColor(AppColor.textSecondary)
@@ -231,25 +235,25 @@ struct TutorDiscoveryView: View {
             SectionHeader(title: "Available Tutors", action: {}, actionLabel: "Filter")
 
             VStack(spacing: AppSpacing.sm) {
-                tutorCard(name: "Dr. Sarah Mitchell", specialty: "Cardiovascular & Respiratory", rating: 4.9, price: "$45/hr")
-                tutorCard(name: "James Chen", specialty: "Nervous System & Special Senses", rating: 4.8, price: "$38/hr")
-                tutorCard(name: "Dr. Amara Okafor", specialty: "Musculoskeletal & Integumentary", rating: 4.7, price: "$42/hr")
-                tutorCard(name: "Emily Rodriguez", specialty: "Endocrine & Reproductive", rating: 4.6, price: "$35/hr")
+                tutorCard(name: "Dr. Sarah Mitchell", specialty: "Cardiovascular & Respiratory", rating: 4.9, availability: "Available")
+                tutorCard(name: "James Chen", specialty: "Nervous System & Special Senses", rating: 4.8, availability: "Available")
+                tutorCard(name: "Dr. Amara Okafor", specialty: "Musculoskeletal & Integumentary", rating: 4.7, availability: "Limited")
+                tutorCard(name: "Emily Rodriguez", specialty: "Endocrine & Reproductive", rating: 4.6, availability: "Available")
             }
         }
     }
 
-    private func tutorCard(name: String, specialty: String, rating: Double, price: String) -> some View {
+    private func tutorCard(name: String, specialty: String, rating: Double, availability: String) -> some View {
         Button {
             let session = TutorSession(
                 id: UUID(), tutorID: UUID(), title: "\(name) - Private Session",
                 description: specialty, startsAt: Date().addingTimeInterval(86400),
-                durationMinutes: 60, priceCents: Int(Double(price.replacingOccurrences(of: "$", with: "").replacingOccurrences(of: "/hr", with: ""))! * 100),
+                durationMinutes: 60,
                 seatsAvailable: 1, seatsBooked: 0, chapterIDs: [], status: .scheduled
             )
             selectedSession = session
         } label: {
-            TutorAvatarCard(name: name, specialty: specialty, rating: rating, pricePerHour: price)
+            TutorAvatarCard(name: name, specialty: specialty, rating: rating, availability: availability)
         }
         .buttonStyle(.plain)
     }
@@ -337,9 +341,6 @@ struct SessionCard: View {
                 }
                 Spacer()
                 VStack(spacing: AppSpacing.xxs) {
-                    Text("$\(String(format: "%.0f", Double(session.priceCents) / 100.0))")
-                        .font(AppTypography.headline)
-                        .foregroundColor(AppColor.gold)
                     Text(actionLabel)
                         .font(AppTypography.caption1)
                         .foregroundColor(AppColor.diamond)

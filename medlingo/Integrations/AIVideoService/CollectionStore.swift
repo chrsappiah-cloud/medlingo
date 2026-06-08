@@ -22,8 +22,8 @@ final class CollectionStore {
     private let cacheKey = "collection_artworks_cache"
     private var isDemo: Bool { !SupabaseManager.shared.isConfigured }
 
-    private init() {
-        self.networkClient = SupabaseManager.shared.networkClient
+    init(networkClient: NetworkClientProtocol? = nil) {
+        self.networkClient = networkClient ?? SupabaseManager.shared.networkClient
         loadFromCache()
     }
 
@@ -160,6 +160,13 @@ final class CollectionStore {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         artworks = (try? decoder.decode([GeneratedArtwork].self, from: data)) ?? []
+    }
+
+    func resetForTesting() {
+        artworks = []
+        isLoading = false
+        lastError = nil
+        UserDefaults.standard.removeObject(forKey: cacheKey)
     }
 
     // MARK: - Sample Data

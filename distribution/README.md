@@ -7,6 +7,7 @@ App Store Connect submission package for **Medlingo v1.0**.
 | Path | Purpose |
 |------|---------|
 | `screenshots/6.7-inch/` | Required iPhone 6.7" screenshots (1290×2796) |
+| `screenshots/13-inch-iPad/` | Required iPad screenshots captured from iPad UI (2048×2732) |
 | `marketing/app-icon-1024.png` | App Store icon (1024×1024) |
 | `../AppStoreSubmissionForm.md` | Copy-paste fields for App Store Connect |
 | `../AppStoreReviewNotes.md` | Reviewer notes + response templates |
@@ -18,9 +19,11 @@ App Store Connect submission package for **Medlingo v1.0**.
 ```bash
 cd /Applications/medlingo
 bash scripts/capture-distribution-screenshots.sh
+DISTRIBUTION_DEVICE_FAMILY=ipad bash scripts/capture-distribution-screenshots.sh
 ```
 
 Uses **iPhone 17 Pro Max** simulator by default. Override with `SIMULATOR_NAME="iPhone 16 Pro Max"`.
+For iPad screenshots, the default is **iPad Pro 13-inch (M5)**. Override with another 13-inch iPad simulator if needed.
 
 ## Screenshot order (upload to App Store Connect)
 
@@ -33,7 +36,8 @@ Uses **iPhone 17 Pro Max** simulator by default. Override with `SIMULATOR_NAME="
 
 ## Upload checklist
 
-- [ ] 6.7" screenshots uploaded (minimum 3, recommended 6)
+- [ ] 6.7" iPhone screenshots uploaded (minimum 3, recommended 6)
+- [ ] 13" iPad screenshots uploaded from `screenshots/13-inch-iPad/`
 - [ ] App icon 1024×1024 (`marketing/app-icon-1024.png`)
 - [ ] Fields copied from `AppStoreSubmissionForm.md`
 - [ ] TestFlight build processed and selected for submission

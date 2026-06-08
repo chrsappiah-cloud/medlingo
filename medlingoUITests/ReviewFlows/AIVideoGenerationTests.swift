@@ -20,9 +20,10 @@ final class AIVideoGenerationTests: UITestCaseBase {
 
         app.buttons["Video"].tap()
 
-        for _ in 0..<8 { app.swipeUp() }
-
-        let generate = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Generate'")).firstMatch
+        let generate = app.buttons["generate-artwork-button"]
+        if !generate.waitForExistence(timeout: 8) {
+            for _ in 0..<6 { app.swipeUp() }
+        }
         XCTAssertTrue(generate.waitForExistence(timeout: 8))
         generate.tap()
 

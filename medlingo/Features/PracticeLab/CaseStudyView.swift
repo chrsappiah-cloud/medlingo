@@ -210,9 +210,9 @@ struct CaseStudyView: View {
     // MARK: - Submit
 
     private var submitSection: some View {
-        PrimaryButton(title: "Submit Answers", isLoading: isSubmitting) {
+        PrimaryButton(title: "Submit Answers", action: {
             submitCase()
-        }
+        }, isLoading: isSubmitting)
         .padding(.top, AppSpacing.md)
     }
 

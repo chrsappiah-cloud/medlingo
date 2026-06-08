@@ -8,7 +8,6 @@ final class CachedChapter {
     var title: String
     var summary: String
     var estimatedMinutes: Int
-    var isPremium: Bool
     var coverArtURL: String?
     var accentColorHex: String
     var lastSyncedAt: Date
@@ -19,7 +18,6 @@ final class CachedChapter {
         self.title = chapter.title
         self.summary = chapter.summary
         self.estimatedMinutes = chapter.estimatedMinutes
-        self.isPremium = chapter.isPremium
         self.coverArtURL = chapter.coverArtURL?.absoluteString
         self.accentColorHex = chapter.accentColorHex
         self.lastSyncedAt = Date()

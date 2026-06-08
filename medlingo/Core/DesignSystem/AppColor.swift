@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppColor {
-    // Premium luxury primaries
+    // Polished visual primaries
     static let primary = Color(hex: "1E2B45")
     static let primaryDark = Color(hex: "0F1A2E")
     static let primaryLight = Color(hex: "4A6FA5")
@@ -69,7 +69,7 @@ enum AppColor {
         Color(hex: "C0C0C0"), // Silver - Stage 15
     ]
 
-    // Premium gradients
+    // Polished gradients
     static let goldGradient = LinearGradient(
         colors: [Color(hex: "D4AF37"), Color(hex: "F5E6A3"), Color(hex: "D4AF37")],
         startPoint: .topLeading,

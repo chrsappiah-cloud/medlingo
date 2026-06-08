@@ -19,53 +19,57 @@ final class ReviewFlowTests: UITestCaseBase {
     }
 
     @MainActor
-    func testSubscriptionPath_upgradeControlExists() throws {
+    func testAccount_cleanLaunchShowsGuestAndNoSignOut() throws {
         launchApp()
         tapTab("Account")
-        XCTAssertTrue(app.staticTexts["Premium Plan"].waitForExistence(timeout: 5))
-        app.staticTexts["Premium Plan"].tap()
+        XCTAssertTrue(app.staticTexts["Guest learner"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["No account signed in"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["sign-out-button"].exists)
+    }
 
-        XCTAssertTrue(app.navigationBars["Subscription"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Available Plans"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Upgrade"].waitForExistence(timeout: 5))
+
+    @MainActor
+    func testAccount_appReviewCredentialsSignInWithoutError() throws {
+        launchApp(arguments: UITestLaunchArguments.accountLaunch())
+        XCTAssertTrue(app.staticTexts["Guest learner"].waitForExistence(timeout: 5))
+
+        let signIn = app.buttons["sign-in-button"]
+        if !signIn.waitForExistence(timeout: 3) { app.collectionViews.firstMatch.swipeUp() }
+        XCTAssertTrue(signIn.waitForExistence(timeout: 8))
+        signIn.tap()
+
+        let emailField = app.textFields["sign-in-email-field"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        emailField.tap()
+        emailField.typeText("reviewer@medlingo.app")
+
+        let passwordField = app.secureTextFields["sign-in-password-field"]
+        XCTAssertTrue(passwordField.waitForExistence(timeout: 5))
+        passwordField.tap()
+        passwordField.typeText("Review2026!")
+
+        let submit = app.buttons["sign-in-submit-button"].firstMatch
+        XCTAssertTrue(submit.waitForExistence(timeout: 5))
+        submit.tap()
+        XCTAssertTrue(app.staticTexts["Review Learner"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["sign-in-error-label"].exists)
     }
 
     @MainActor
-    func testSubscriptionPath_whenProductsFail_showsUnavailableMessage() throws {
-        launchApp(arguments: UITestLaunchArguments.subscriptionProductsFailure())
-        XCTAssertTrue(app.staticTexts["Medlingo"].waitForExistence(timeout: 8))
+    func testAccount_signOutClearsAuthenticatedSession() throws {
+        launchApp(arguments: [
+            UITestLaunchArguments.uiTestMode,
+            UITestLaunchArguments.seedAuthenticatedSession
+        ])
         tapTab("Account")
-        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 8))
-        app.staticTexts["Premium Plan"].tap()
-
-        XCTAssertTrue(app.navigationBars["Subscription"].waitForExistence(timeout: 5))
-        let inlineError = app.staticTexts["subscription-load-error"]
-        let alertError = app.alerts["Purchase Error"]
-        XCTAssertTrue(
-            inlineError.waitForExistence(timeout: 8) || alertError.waitForExistence(timeout: 8),
-            "Expected subscription load error message or alert"
-        )
-    }
-
-    @MainActor
-    func testRestorePurchases_buttonExistsAndIsTappable() throws {
-        launchApp(arguments: UITestLaunchArguments.restorePurchasesSuccess())
-        tapTab("Account")
-        let restore = app.buttons["Restore Purchases"]
-        XCTAssertTrue(restore.waitForExistence(timeout: 5))
-        restore.tap()
-        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 3))
-    }
-
-    @MainActor
-    func testAccount_signOutButtonReachable() throws {
-        launchApp()
-        tapTab("Account")
+        XCTAssertTrue(app.staticTexts["Review Learner"].waitForExistence(timeout: 5))
         let signOut = app.buttons["sign-out-button"]
-        if !signOut.waitForExistence(timeout: 3) {
-            app.collectionViews.firstMatch.swipeUp()
-            app.collectionViews.firstMatch.swipeUp()
-        }
+        if !signOut.waitForExistence(timeout: 3) { app.collectionViews.firstMatch.swipeUp() }
         XCTAssertTrue(signOut.waitForExistence(timeout: 8))
+        signOut.tap()
+        XCTAssertTrue(app.alerts["Account"].waitForExistence(timeout: 5))
+        app.alerts["Account"].buttons["OK"].tap()
+        XCTAssertTrue(app.staticTexts["Guest learner"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["sign-out-button"].exists)
     }
 }

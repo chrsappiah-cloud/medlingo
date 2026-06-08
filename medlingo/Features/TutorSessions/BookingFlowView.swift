@@ -62,7 +62,6 @@ struct BookingFlowView: View {
                     DetailRow(icon: "clock", label: "Duration", value: "\(session.durationMinutes) min")
                     DetailRow(icon: "calendar", label: "Date", value: session.startsAt.formatted(date: .abbreviated, time: .shortened))
                     DetailRow(icon: "person.2", label: "Seats Left", value: "\(session.seatsAvailable - session.seatsBooked)")
-                    DetailRow(icon: "dollarsign.circle", label: "Price", value: "$\(String(format: "%.2f", Double(session.priceCents) / 100.0))")
                 }
             }
 
