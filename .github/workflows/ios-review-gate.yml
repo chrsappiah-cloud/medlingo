@@ -20,8 +20,7 @@ concurrency:
 env:
   SCHEME: medlingo
   PROJECT: medlingo.xcodeproj
-  SIMULATOR: "iPhone 17 Pro Max"
-  IOS_VERSION: "latest"
+  SIMULATOR: "CI iPhone MedLingo Review"
 
 jobs:
   # ── 1. Static policy checks (fast, no Xcode needed) ──────────────────────
@@ -76,7 +75,7 @@ jobs:
           xcodebuild \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
-            -destination "platform=iOS Simulator,name=$SIMULATOR,OS=$IOS_VERSION" \
+            -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
             build \
             | xcpretty
@@ -93,10 +92,9 @@ jobs:
           xcode-version: latest-stable
 
       - name: Boot simulator
-        run: |
-          UDID=$(xcrun simctl list devices available | grep "$SIMULATOR" | head -1 | grep -oE '[0-9A-F-]{36}')
-          xcrun simctl boot "$UDID" 2>/dev/null || true
-          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+        env:
+          CI_SIM_NAME: ${{ env.SIMULATOR }}
+        run: bash scripts/ci-prepare-simulator.sh
 
       - name: Run review-path tests
         run: |
@@ -105,7 +103,7 @@ jobs:
           xcodebuild test \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
-            -destination "id=$SIMULATOR_UDID" \
+            -destination "id=$SIM_ID" \
             -configuration Debug \
             -only-testing:medlingoUITests/ReviewFlowTests \
             -only-testing:medlingoUITests/SmokeTests \
