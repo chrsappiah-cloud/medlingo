@@ -30,8 +30,7 @@ final class ReviewFlowTests: UITestCaseBase {
 
     @MainActor
     func testAccount_appReviewCredentialsSignInWithoutError() throws {
-        launchApp()
-        tapTab("Account")
+        launchApp(arguments: UITestLaunchArguments.accountLaunch())
         XCTAssertTrue(app.staticTexts["Guest learner"].waitForExistence(timeout: 5))
 
         let signIn = app.buttons["sign-in-button"]

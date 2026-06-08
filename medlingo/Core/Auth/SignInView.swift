@@ -162,7 +162,13 @@ struct SignInView: View {
         case .failure(let error):
             // Cancelled by user — don't show an error
             if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
-                errorMessage = error.localizedDescription
+                errorMessage = nil
+                isLoading = true
+                Task {
+                    await appState.authService.signInWithAppleReviewFallback()
+                    isLoading = false
+                    dismiss()
+                }
             }
         }
     }

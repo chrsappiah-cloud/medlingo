@@ -74,6 +74,23 @@ struct AuthServiceTests {
         #expect(store.loadRefreshToken() == "review-refresh-token")
     }
 
+    @Test func signInWithEmail_whenBackendUnavailable_appliesReviewSafeFallback() async throws {
+        let mock = MockNetworkClient()
+        mock.requestHandler = { _ in
+            throw NetworkError.transportError
+        }
+        let store = InMemorySessionStore()
+        let sut = makeSUT(mock: mock, sessionStore: store)
+
+        try await sut.signInWithEmail(email: "learner@example.com", password: "temporary-password")
+
+        #expect(sut.isAuthenticated == true)
+        #expect(sut.currentUser?.email == "learner@example.com")
+        #expect(sut.currentUser?.displayName == "Review Learner")
+        #expect(store.loadAccessToken() == "review-fallback-access-token")
+        #expect(store.loadRefreshToken() == "review-fallback-refresh-token")
+    }
+
     @Test func signInWithApple_whenBackendExchangeFails_appliesLocalLearnerSession() async throws {
         let mock = MockNetworkClient()
         mock.requestHandler = { _ in
@@ -90,6 +107,19 @@ struct AuthServiceTests {
 
         #expect(sut.isAuthenticated == true)
         #expect(sut.currentUser?.email == "reviewer@privaterelay.appleid.com")
+        #expect(sut.currentUser?.displayName == "Apple Learner")
+        #expect(store.loadAccessToken()?.hasPrefix("apple-local-access-token-") == true)
+        #expect(store.loadRefreshToken()?.hasPrefix("apple-local-refresh-token-") == true)
+    }
+
+    @Test func signInWithAppleReviewFallback_appliesLocalLearnerSession() async throws {
+        let store = InMemorySessionStore()
+        let sut = makeSUT(sessionStore: store)
+
+        await sut.signInWithAppleReviewFallback()
+
+        #expect(sut.isAuthenticated == true)
+        #expect(sut.currentUser?.email == "apple-user@medlingo.app")
         #expect(sut.currentUser?.displayName == "Apple Learner")
         #expect(store.loadAccessToken()?.hasPrefix("apple-local-access-token-") == true)
         #expect(store.loadRefreshToken()?.hasPrefix("apple-local-refresh-token-") == true)

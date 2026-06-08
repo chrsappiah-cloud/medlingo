@@ -28,6 +28,7 @@ struct AppLaunchConfiguration: Sendable {
     var seedsAuthenticatedSession: Bool { arguments.contains("-seedAuthenticatedSession") }
     var seedsMigratedState: Bool { arguments.contains("-seedMigratedState") }
     var seedsCreatorRole: Bool { arguments.contains("-seedCreatorRole") }
+    var initialTabName: String? { nextValue(after: "-initialTab") }
     var forcesDemoAIGeneration: Bool {
         arguments.contains("-mockAIGeneration") || (isUITestMode && seedsCreatorRole)
     }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selectedTab: AppTab = .learn
+    @State private var selectedTab: AppTab
     private var isCreator: Bool {
         let role = AppState.shared.currentUserRole
         return role == .administrator || role == .superAdmin
@@ -27,6 +27,11 @@ struct MainTabView: View {
             case .account: return "person.fill"
             }
         }
+    }
+
+    init(initialTab: AppTab? = nil) {
+        let launchTab = AppLaunchConfiguration.shared.initialTabName.flatMap(AppTab.init(rawValue:))
+        _selectedTab = State(initialValue: initialTab ?? launchTab ?? .learn)
     }
 
     var body: some View {

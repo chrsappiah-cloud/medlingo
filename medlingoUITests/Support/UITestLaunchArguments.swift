@@ -7,6 +7,7 @@ enum UITestLaunchArguments {
     static let seedExpiredToken = "-seedExpiredToken"
     static let seedAuthenticatedSession = "-seedAuthenticatedSession"
     static let seedCreatorRole = "-seedCreatorRole"
+    static let initialTab = "-initialTab"
 
     static func standardSmoke() -> [String] { [uiTestMode] }
 
@@ -16,5 +17,9 @@ enum UITestLaunchArguments {
 
     static func aiVideoGeneration() -> [String] {
         [uiTestMode, seedCreatorRole, "-mockAIGeneration"]
+    }
+
+    static func accountLaunch() -> [String] {
+        [uiTestMode, initialTab, "Account"]
     }
 }
